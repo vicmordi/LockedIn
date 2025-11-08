@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Locked In — Timer</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="stylesheet" href="timer.css" />
+</head>
+<body>
+  <div class="app card">
+    <header class="header">
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <h1>Locked In — Timer</h1>
+          <p class="muted">Tap the big clock to toggle Focus Mode.</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <!-- History link is PIN-gated in JS -->
+        <a id="historyLink" class="pill" href="#">History</a>
+        <span id="wakelockStatus" class="pill">Screen lock: off</span>
+      </nav>
+    </header>
+
+    <section id="timerPage" class="grid">
+      <section class="panel">
+        <!-- Clicking this big clock now re-enters Focus Mode -->
+        <div class="timer" id="timer">00:00:00</div>
+        <div class="sub" id="phaseLabel">Phase: Focus</div>
+        <div class="progress"><div id="bar" class="bar"></div></div>
+        <div class="controls">
+          <button id="endEarly" class="btn btn-ghost" disabled>End</button>
+          <button id="pauseResume" class="btn btn-ghost" disabled>Resume</button>
+          <button id="reset" class="btn btn-ghost">Reset</button>
+          <button id="emergencyBtn" class="btn btn-ghost">Emergency</button>
+          <button id="focusModeBtn" class="btn">Focus Mode</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <label class="label">Session info</label>
+        <div id="sessionInfo" class="history"></div>
+
+        <label class="label" style="margin-top:12px">Session history</label>
+        <div id="history" class="history"></div>
+        <div class="actions">
+          <!-- Back to Setup is now PIN-gated in JS -->
+          <a id="backToSetup" class="btn" href="#">↩ Back to Setup</a>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <!-- PIN/Emergency sheet -->
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-inner" onclick="event.stopPropagation()">
+      <span class="pill">Focus session</span>
+      <h2 class="h2">Enter PIN to confirm</h2>
+      <div class="emergency" id="emergencyLinks"></div>
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="Enter your PIN" class="pinbox" />
+      <div class="keypad" id="keypad"></div>
+      <button id="submitPin" class="btn">Confirm</button>
+      <button id="cancelSheet" class="btn btn-ghost">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Minimal countdown overlay (Focus Mode) -->
+  <div id="minimal" class="minimal" aria-hidden="true">
+    <div id="minimalTimer" class="minimalTimer">00:00:00</div>
+  </div>
+
+  <!-- Quotes toast container -->
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <audio id="ding" preload="auto">
+    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAA..." type="audio/mp3">
+  </audio>
+
+  <script src="timer.js"></script>
+</body>
+</html>

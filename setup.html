@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Locked In — Setup</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="stylesheet" href="setup.css" />
+</head>
+<body>
+  <div class="app card">
+    <header class="header">
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <h1>Locked In — Setup</h1>
+          <p class="muted">Fill this form first. The timer page comes after.</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="pill" href="history.html">History</a>
+      </nav>
+    </header>
+
+    <form id="setupForm" class="stack">
+      <!-- Duration -->
+      <section class="panel">
+        <label class="label">Focus duration</label>
+        <div id="presetRow" class="row">
+          <button type="button" class="chip" data-min="25">25m</button>
+          <button type="button" class="chip" data-min="50">50m</button>
+          <button type="button" class="chip" data-min="90">90m</button>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label class="label">Custom minutes</label>
+            <input id="customMinutes" type="number" min="1" max="600" placeholder="e.g. 45" />
+          </div>
+          <div>
+            <label class="label">Required passcode (min 4 digits)</label>
+            <input id="pin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Set a PIN" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Description -->
+      <section class="panel">
+        <label class="label">Session description (optional)</label>
+        <textarea id="sessionDesc" rows="3" placeholder="e.g. ‘Deep work on resume builder, API wiring, and tests.’"></textarea>
+        <p class="note">This will appear on the Timer page and be saved in History.</p>
+      </section>
+
+      <!-- Breaks / Reminders -->
+      <section class="panel">
+        <label class="label">Break plan</label>
+        <select id="breakPlan">
+          <option value="pomodoro">Pomodoro: 25m focus → 5m stand/stretch</option>
+          <option value="fiftyten">50/10: 50m focus → 10m stand/stretch</option>
+          <option value="custom">Custom (choose your own)</option>
+        </select>
+
+        <div class="grid-2" style="margin-top:10px">
+          <label class="check">
+            <input type="checkbox" id="enableHeadRest" checked />
+            <span>Enable head/eye-rest reminders</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="enableStand" checked />
+            <span>Enable stand & stretch reminders</span>
+          </label>
+        </div>
+
+        <div id="customBreaks" class="grid-3 hidden" style="margin-top:10px">
+          <div>
+            <label class="label">Head/eye-rest every (min)</label>
+            <input id="microEvery" type="number" min="10" max="120" value="20" />
+          </div>
+          <div>
+            <label class="label">Stand & stretch every (min)</label>
+            <input id="standEvery" type="number" min="30" max="240" value="60" />
+          </div>
+          <div>
+            <label class="label">Stand break length (min)</label>
+            <input id="standLen" type="number" min="1" max="15" value="3" />
+          </div>
+        </div>
+        <p class="note">Breaks are nudges—no social scrolling.</p>
+
+        <div class="grid-2" style="margin-top:10px">
+          <label class="check">
+            <input type="checkbox" id="enableQuotes" checked />
+            <span>Show motivational quotes every 30 minutes</span>
+          </label>
+          <span class="note">Quotes auto-dismiss.</span>
+        </div>
+      </section>
+
+      <!-- Emergency -->
+      <section class="panel">
+        <label class="label">Emergency contacts (at least one)</label>
+        <div class="grid-3">
+          <input id="tel1" type="tel" placeholder="e.g. 911 or +1 416 555 1234" />
+          <input id="tel2" type="tel" placeholder="e.g. Mom +1 ..." />
+          <input id="tel3" type="tel" placeholder="e.g. Doctor +1 ..." />
+        </div>
+        <p class="note">Only emergency calls are allowed during lockdown—no PIN needed.</p>
+      </section>
+
+      <div class="actions">
+        <button id="startBtn" class="btn" type="submit">⏱️ Start session</button>
+      </div>
+      <p id="errors" class="errors hidden"></p>
+    </form>
+  </div>
+
+  <script src="setup.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Locked In — History</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="stylesheet" href="history.css" />
+</head>
+<body>
+  <div class="app card">
+    <header class="header">
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <h1>Locked In — History</h1>
+          <p class="muted">Your last 200 sessions.</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="pill" href="setup.html">Setup</a>
+        <!-- Timer routes to setup so a new session is configured first -->
+        <a class="pill" href="setup.html">Timer</a>
+      </nav>
+    </header>
+
+    <section class="panel">
+      <div id="history" class="history"></div>
+      <div class="actions">
+        <button id="exportBtn" class="btn">Export CSV</button>
+        <button id="clearBtn" class="btn btn-ghost">Clear History</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="history.js"></script>
+</body>
+</html>

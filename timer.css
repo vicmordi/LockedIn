@@ -1,0 +1,58 @@
+:root{
+  --bg:#0b1220; --card:#111827; --text:#e5e7eb; --muted:#94a3b8;
+  --accent:#22d3ee; --ring:rgba(34,211,238,.35); --border:rgba(255,255,255,.08);
+  --ok:#22c55e; --bad:#ef4444;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0; background:radial-gradient(1200px 900px at 50% -200px,#0e1a31 0%,#0b1220 55%,#09101d 100%);
+  color:var(--text); font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+  display:flex; align-items:center; justify-content:center; padding:16px;
+}
+.app{width:min(980px,100%)} .card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)); border:1px solid var(--border); border-radius:20px; padding:20px}
+.header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+.brand{display:flex; gap:10px; align-items:center}
+.dot{width:10px; height:10px; border-radius:999px; background:var(--accent); box-shadow:0 0 18px var(--accent)}
+h1{margin:0; font-size:18px}
+.muted{color:var(--muted); font-size:13px}
+.pill{font-size:12px; color:var(--muted); padding:6px 10px; border-radius:999px; border:1px solid var(--border)}
+.nav a{text-decoration:none}
+
+.grid{display:grid; grid-template-columns:1fr; gap:14px}
+@media (min-width:760px){ .grid{grid-template-columns:1.2fr .8fr} }
+.panel{background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px}
+
+.timer{display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; font-weight:900; letter-spacing:1px; user-select:none; text-align:center; font-size:clamp(42px,11vw,140px); padding:18px 8px; cursor:pointer}
+.sub{font-size:13px; color:var(--muted); text-align:center; margin-top:-6px}
+.progress{height:10px; background:#0c1426; border:1px solid var(--border); border-radius:999px; overflow:hidden; margin-top:10px}
+.bar{height:100%; width:0%; background:linear-gradient(90deg,#22d3ee,#22c55e)}
+.controls{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+.btn{display:inline-flex; justify-content:center; align-items:center; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.09); background:transparent; color:var(--text); width:100%}
+.btn-ghost{background:transparent}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+.actions{margin-top:10px}
+.label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+.history{display:flex; flex-direction:column; gap:8px; max-height:280px; overflow:auto}
+.hrow{display:flex; justify-content:space-between; align-items:center; font-size:14px; border-bottom:1px dashed var(--border); padding:8px 0}
+.ok{color:var(--ok)} .bad{color:var(--bad)}
+
+/* Sheet */
+.sheet{position:fixed; inset:0; background:rgba(5,10,18,.86); backdrop-filter:blur(4px); display:none; z-index:9999}
+.sheet[aria-hidden="false"]{display:block}
+.sheet-inner{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:22px}
+.emergency{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+.emergency a{display:inline-flex; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid rgba(239,68,68,.35); color:#fecaca; background:rgba(239,68,68,.08); text-decoration:none; font-weight:700}
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(360px,90vw)}
+.kbtn{padding:14px 0; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:#0d1729; color:#e5e7eb; font-size:20px; font-weight:700}
+.pinbox{width:min(360px,90vw); padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:#0d1729; color:#e5e7eb}
+.h2{margin:0}
+
+/* Minimal overlay (Focus Mode) */
+.minimal{position:fixed; inset:0; display:none; z-index:8888; background:radial-gradient(1400px 1000px at 50% -200px,#0e1a31 0%,#0b1220 55%,#09101d 100%); touch-action:none}
+.minimal[aria-hidden="false"]{display:flex}
+.minimalTimer{margin:auto; font-variant-numeric:tabular-nums; font-weight:900; letter-spacing:1px; user-select:none; font-size:clamp(58px,16vw,220px)}
+
+/* Toasts (quotes) */
+.toasts{position:fixed; left:50%; transform:translateX(-50%); bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:9000; width:min(90vw,680px)}
+.toast{background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text); padding:12px 14px; border-radius:12px; box-shadow:0 10px 18px rgba(0,0,0,.25)}
+.toast small{display:block; color:var(--muted); margin-top:6px}
