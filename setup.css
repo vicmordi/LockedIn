@@ -1,10 +1,10 @@
 :root{
-  --bg1:#1A1A1E;     /* charcoal */
-  --bg2:#2A2A33;     /* graphite violet */
+  --bg1:#1A1A1E;
+  --bg2:#2A2A33;
   --card:rgba(40,40,45,.75);
   --text:#E6E6EA;
   --muted:#9A9AA5;
-  --accent:#B388FF; 
+  --accent:#B388FF;
   --accent-2:#7E57C2;
   --ring:rgba(179,136,255,.45);
   --border:rgba(255,255,255,.06);
@@ -17,8 +17,7 @@
 html,body{height:100%}
 body{
   margin:0;
-  background:
-    radial-gradient(900px 700px at 50% -200px,var(--bg1) 0%,#1F1F23 45%,var(--bg2) 100%);
+  background:radial-gradient(900px 700px at 50% -200px,var(--bg1) 0%,#1F1F23 45%,var(--bg2) 100%);
   color:var(--text);
   font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
   display:flex;align-items:center;justify-content:center;
@@ -44,7 +43,7 @@ h1{margin:0;font-size:18px}
   padding:6px 10px;border-radius:999px;
   border:1px solid var(--border);
   font-size:12px;color:var(--muted);
-  text-decoration:none; background:rgba(255,255,255,.04);
+  text-decoration:none;background:rgba(255,255,255,.04);
 }
 
 .panel{
@@ -63,10 +62,7 @@ h1{margin:0;font-size:18px}
   border:1px solid var(--field-border);
   color:var(--text);cursor:pointer;font-weight:600;
 }
-.chip[data-active="true"]{
-  outline:2px solid var(--ring);
-  background:rgba(179,136,255,.12);
-}
+.chip[data-active="true"]{outline:2px solid var(--ring);background:rgba(179,136,255,.12)}
 
 input,select,textarea{
   width:100%;
@@ -81,7 +77,6 @@ input,select,textarea{
 @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
 
 .note{font-size:12px;color:var(--muted)}
-
 .btn{
   width:100%;padding:14px;border-radius:14px;
   font-weight:700;color:#fff;
@@ -90,6 +85,28 @@ input,select,textarea{
   box-shadow:0 6px 18px rgba(179,136,255,.28);
 }
 .btn-ghost{background:#2C2C32;border:1px solid var(--border)}
-
 .actions{display:flex;gap:12px;margin-top:10px}
 .hidden{display:none!important}
+
+/* --- Mobile fixes --- */
+@supports (height:100svh){
+  body{min-height:100svh;}
+}
+@media(max-width:760px){
+  html,body{height:auto;}
+  body{
+    display:block;overflow:auto;
+    padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+    padding-top:calc(12px + env(safe-area-inset-top));
+    -webkit-overflow-scrolling:touch;
+  }
+  .app{width:100%;margin:0;}
+  .card{padding:16px;}
+  .header{
+    position:sticky;top:env(safe-area-inset-top);z-index:10;
+    margin-bottom:12px;padding:10px 12px;
+    background:var(--card);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    border-top-left-radius:16px;border-top-right-radius:16px;
+  }
+}
