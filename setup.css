@@ -1,4 +1,4 @@
-/* ===== Base + iOS input zoom fix ===== */
+/* ===== Theme + tokens ===== */
 :root{
   --bg1:#1A1A1E; --bg2:#2A2A33;
   --card:rgba(40,40,45,.75);
@@ -10,35 +10,63 @@
   --ok:#4ADE80; --bad:#F87171;
   --shadow:0 10px 28px rgba(0,0,0,.35);
 }
+
+/* ===== Base + iOS input zoom fix ===== */
 *{box-sizing:border-box}
 html,body{height:100%}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;font-size:16px}
 
-/* ===== Page ===== */
+/* ===== Page (block layout so sticky works) ===== */
 body{
   background:radial-gradient(900px 700px at 50% -200px,var(--bg1) 0%,#1F1F23 45%,var(--bg2) 100%);
   color:var(--text);
   font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  display:flex;align-items:center;justify-content:center;padding:18px;
+  display:block;
+  padding:24px;
+  -webkit-overflow-scrolling:touch;
 }
-.app{width:min(980px,100%)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.app{width:min(980px,100%); margin:0 auto;}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:16px;
+  backdrop-filter:blur(14px);
+  box-shadow:var(--shadow);
+}
 
-/* Header */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
+/* ===== Sticky header (all screens) ===== */
+.header{
+  position:sticky;
+  top:calc(0px + env(safe-area-inset-top));
+  z-index:20;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:10px 12px;
+  margin:-8px -8px 16px -8px;      /* stretch to edges a bit */
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border:1px solid var(--border);
+  border-radius:14px;
+}
 .brand{display:flex;align-items:center;gap:10px}
 .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 14px rgba(179,136,255,.8)}
 h1{margin:0;font-size:18px}
 .muted{color:var(--muted);font-size:13px}
-.pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--muted);text-decoration:none;background:rgba(255,255,255,.04)}
+.pill{
+  padding:6px 10px;border-radius:999px;
+  border:1px solid var(--border);
+  font-size:12px;color:var(--muted);
+  text-decoration:none;background:rgba(255,255,255,.04)
+}
 
-/* Panels / controls */
+/* ===== Panels / controls ===== */
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;backdrop-filter:blur(8px)}
 .label{font-size:13px;color:var(--muted);margin-bottom:6px}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .chip{padding:10px 12px;border-radius:12px;background:var(--field);border:1px solid var(--field-border);color:var(--text);cursor:pointer;font-weight:600}
 .chip[data-active="true"]{outline:2px solid var(--ring);background:rgba(179,136,255,.12)}
+
 input,select,textarea,button{font-size:16px !important;line-height:1.4}
 .pinbox,.kbtn{font-size:18px !important}
 
@@ -46,32 +74,28 @@ input,select,textarea{
   width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--field-border);
   background:var(--field);color:var(--text);
 }
+
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr}}
 
 .note{font-size:12px;color:var(--muted)}
-.btn{width:100%;padding:14px;border-radius:14px;font-weight:700;color:#fff;border:1px solid rgba(179,136,255,.18);
-  background:linear-gradient(180deg,var(--accent),var(--accent-2));box-shadow:0 6px 18px rgba(179,136,255,.28)}
+.btn{
+  width:100%;padding:14px;border-radius:14px;font-weight:700;color:#fff;
+  border:1px solid rgba(179,136,255,.18);
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));
+  box-shadow:0 6px 18px rgba(179,136,255,.28)
+}
 .btn-ghost{background:#2C2C32;border:1px solid var(--border)}
 .actions{display:flex;gap:12px;margin-top:10px}
 .hidden{display:none!important}
 
-/* --- Mobile fixes: safe-area, scrolling, sticky header --- */
+/* --- Mobile padding & safe areas --- */
 @supports (height:100svh){ body{min-height:100svh} }
 @media(max-width:760px){
-  html,body{height:auto}
   body{
-    display:block;overflow:auto;
     padding:12px 12px calc(12px + env(safe-area-inset-bottom));
     padding-top:calc(12px + env(safe-area-inset-top));
-    -webkit-overflow-scrolling:touch;
   }
-  .app{width:100%;margin:0}
-  .card{padding:16px}
-  .header{
-    position:sticky;top:env(safe-area-inset-top);z-index:10;
-    margin-bottom:12px;padding:10px 12px;background:var(--card);backdrop-filter:blur(14px);
-    border-bottom:1px solid var(--border);border-top-left-radius:16px;border-top-right-radius:16px;
-  }
+  .card{padding:12px}
 }
