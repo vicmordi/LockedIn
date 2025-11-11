@@ -95,6 +95,25 @@
         </div>
       </section>
 
+      <!-- Sound Alerts -->
+      <section class="panel">
+        <label class="label">Sound alerts</label>
+        <div class="grid-2" style="align-items:end">
+          <label class="check">
+            <input id="soundEnabled" type="checkbox" checked />
+            <span>Enable sound alerts (breaks, posture, head rest, time’s up)</span>
+          </label>
+          <div>
+            <label class="label">Volume</label>
+            <input id="soundVolume" type="range" min="0" max="1" step="0.01" value="0.7" />
+          </div>
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button type="button" class="btn-ghost btn" id="testSounds">Test sounds</button>
+        </div>
+        <p class="note">Sounds use Web Audio (no files). On iOS/Android they play after a tap.</p>
+      </section>
+
       <!-- Emergency -->
       <section class="panel">
         <label class="label">Emergency contacts (at least one)</label>
@@ -113,6 +132,53 @@
     </form>
   </div>
 
+  <!-- Alerts for test button -->
+  <script src="alerts.js"></script>
   <script src="setup.js"></script>
+
+  <!-- Small inline script to wire sound settings + test -->
+  <script>
+    (function(){
+      const LS_ENABLED = 'lockedin.sound.enabled';
+      const LS_VOLUME  = 'lockedin.sound.volume';
+
+      const elEnabled = document.getElementById('soundEnabled');
+      const elVolume  = document.getElementById('soundVolume');
+      const elTest    = document.getElementById('testSounds');
+
+      // Load saved settings
+      const en = localStorage.getItem(LS_ENABLED);
+      const vol = localStorage.getItem(LS_VOLUME);
+      if (en !== null) elEnabled.checked = (en === 'true');
+      if (vol !== null) elVolume.value = vol;
+
+      // Persist on change
+      elEnabled.addEventListener('change', e => {
+        localStorage.setItem(LS_ENABLED, String(e.target.checked));
+        if (window.LockedInAlerts) LockedInAlerts.setEnabled(e.target.checked);
+      });
+      elVolume.addEventListener('input', e => {
+        localStorage.setItem(LS_VOLUME, String(e.target.value));
+        if (window.LockedInAlerts) LockedInAlerts.setVolume(e.target.value);
+      });
+
+      // Test sounds (unlocks audio ctx after button tap)
+      elTest.addEventListener('click', () => {
+        try {
+          if (window.LockedInAlerts) {
+            LockedInAlerts.init();
+            LockedInAlerts.loadSettings();
+            LockedInAlerts.setEnabled(elEnabled.checked);
+            LockedInAlerts.setVolume(elVolume.value);
+            // Preview a quick suite
+            LockedInAlerts.play('break');
+            setTimeout(()=>LockedInAlerts.play('stand'), 600);
+            setTimeout(()=>LockedInAlerts.play('headrest'), 1200);
+            setTimeout(()=>LockedInAlerts.play('timeup'), 1800);
+          }
+        } catch(e){}
+      });
+    })();
+  </script>
 </body>
 </html>

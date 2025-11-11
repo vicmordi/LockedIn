@@ -1,8 +1,10 @@
+
 let durationMs = 0;
 
 const presetRow = document.getElementById('presetRow');
 const customMinutes = document.getElementById('customMinutes');
 const pinField = document.getElementById('pin');
+
 const breakPlan = document.getElementById('breakPlan');
 const customBreaks = document.getElementById('customBreaks');
 const microEvery = document.getElementById('microEvery');
@@ -11,22 +13,34 @@ const standLen = document.getElementById('standLen');
 const enableHeadRest = document.getElementById('enableHeadRest');
 const enableStand = document.getElementById('enableStand');
 const enableQuotes = document.getElementById('enableQuotes');
+
 const tel1 = document.getElementById('tel1');
 const tel2 = document.getElementById('tel2');
 const tel3 = document.getElementById('tel3');
 const sessionDesc = document.getElementById('sessionDesc');
+
 const form = document.getElementById('setupForm');
 const errorsEl = document.getElementById('errors');
 
+// Sound controls (from setup.html Sound alerts panel)
+const soundEnabledEl = document.getElementById('soundEnabled');
+const soundVolumeEl  = document.getElementById('soundVolume');
+
+const LS_ENABLED = 'lockedin.sound.enabled';
+const LS_VOLUME  = 'lockedin.sound.volume';
+
 function phoneOk(v){ return (v||'').replace(/\s+/g,'').length >= 3; }
+
 function showErrors(list){
   if(!list.length){ errorsEl.classList.add('hidden'); errorsEl.textContent = ''; return; }
   errorsEl.innerHTML = 'Please fix:<br>• ' + list.join('<br>• ');
   errorsEl.classList.remove('hidden');
 }
+
 function validate(){
   const errs = [];
   const pin = (pinField.value||'').trim();
+
   if(!durationMs || durationMs < 60000) errs.push('Choose a focus duration (≥ 1 minute).');
   if(pin.length < 4 || !/^\d+$/.test(pin)) errs.push('PIN must be at least 4 digits (numbers only).');
 
@@ -45,7 +59,10 @@ function validate(){
   showErrors(errs);
   return errs.length === 0;
 }
-function applyPlanUI(){ customBreaks.classList.toggle('hidden', breakPlan.value !== 'custom'); }
+
+function applyPlanUI(){
+  customBreaks.classList.toggle('hidden', breakPlan.value !== 'custom');
+}
 
 presetRow.addEventListener('click', e=>{
   const btn = e.target.closest('.chip'); if(!btn) return;
@@ -55,6 +72,7 @@ presetRow.addEventListener('click', e=>{
   durationMs = m * 60 * 1000;
   customMinutes.value = '';
 });
+
 customMinutes.addEventListener('input', ()=>{
   const v = +customMinutes.value;
   if(!isNaN(v) && v > 0){
@@ -62,6 +80,7 @@ customMinutes.addEventListener('input', ()=>{
     [...presetRow.querySelectorAll('.chip')].forEach(c=>c.dataset.active='false');
   }
 });
+
 breakPlan.addEventListener('change', applyPlanUI);
 applyPlanUI();
 
@@ -69,32 +88,51 @@ form.addEventListener('submit', (e)=>{
   e.preventDefault();
   if(!validate()) return;
 
-  // compute plan
-  let micro = 0, standEveryMin = 0, standLenMin = 5;
-  if(breakPlan.value === 'pomodoro'){
-    standEveryMin = Math.round(durationMs/60000);
-    standLenMin = 5;
-    micro = enableHeadRest.checked ? 20 : 0;
-  }else if(breakPlan.value === 'fiftyten'){
-    standEveryMin = Math.round(durationMs/60000);
-    standLenMin = 10;
-    micro = enableHeadRest.checked ? 25 : 0;
-  }else{
-    micro = enableHeadRest.checked ? Math.max(0, +microEvery.value || 0) : 0;
+  // ---- Compute plan values ----
+  let microEveryMin = 0, standEveryMin = 0, standLenMin = 0;
+
+  if (breakPlan.value === 'pomodoro') {
+    // True Pomodoro = 25/5; headrest every ~20m if enabled
+    microEveryMin = enableHeadRest.checked ? 20 : 0;
+    standEveryMin = enableStand.checked ? 25 : 0;
+    standLenMin   = enableStand.checked ? 5  : 0;
+  } else if (breakPlan.value === 'fiftyten') {
+    // 50/10 pattern; headrest still every ~20m if enabled
+    microEveryMin = enableHeadRest.checked ? 20 : 0;
+    standEveryMin = enableStand.checked ? 50 : 0;
+    standLenMin   = enableStand.checked ? 10 : 0;
+  } else {
+    // Custom
+    microEveryMin = enableHeadRest.checked ? Math.max(0, +microEvery.value || 0) : 0;
     standEveryMin = enableStand.checked ? Math.max(0, +standEvery.value || 0) : 0;
-    standLenMin = enableStand.checked ? Math.max(1, +standLen.value || 3) : 0;
+    standLenMin   = enableStand.checked ? Math.max(1, +standLen.value   || 3) : 0;
   }
 
+  // ---- Persist sound preferences (On/Off + Volume) ----
+  if (soundEnabledEl) {
+    localStorage.setItem(LS_ENABLED, String(!!soundEnabledEl.checked));
+  }
+  if (soundVolumeEl) {
+    const vol = Math.min(1, Math.max(0, parseFloat(soundVolumeEl.value || '0.7')));
+    localStorage.setItem(LS_VOLUME, String(vol));
+  }
+
+  // Signal to timer that sounds are expected (timer will try to auto-play;
+  // on some mobile browsers a single tap on timer page may still be required)
+  sessionStorage.setItem('lockedin.sound.expect', 'true');
+
+  // ---- Build config + navigate ----
   const cfg = {
     durationMs,
     pin: (pinField.value||'').trim(),
     enableQuotes: !!enableQuotes.checked,
-    microEveryMin: micro,
+    microEveryMin,
     standEveryMin,
     standLenMin,
     emergency: [tel1.value, tel2.value, tel3.value].filter(phoneOk),
     description: (sessionDesc.value||'').trim()
   };
+
   sessionStorage.setItem('lockedInConfig', JSON.stringify(cfg));
   window.location.href = 'timer.html';
 });
