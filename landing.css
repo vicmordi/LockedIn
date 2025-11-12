@@ -2,8 +2,8 @@
   --bg1:#0b1220; --bg2:#0e1528;
   --text:#e6e7eb; --muted:#94a3b8;
   --accent:#B388FF; --accent2:#7E57C2;
-  --border:rgba(255,255,255,.08);
-  --navH:56px;                 /* top bar height */
+  --border:rgba(255,255,255,.10);
+  --navH:56px;
 }
 
 *{box-sizing:border-box}
@@ -19,138 +19,71 @@ body{
 .nav{
   position:sticky; top:calc(0px + env(safe-area-inset-top)); z-index:10;
   display:flex; align-items:center; justify-content:space-between;
-  padding:12px 16px;
-  height: var(--navH);                 /* ensure known height */
+  padding:12px 16px; backdrop-filter:saturate(1.1) blur(8px);
+  background:linear-gradient(0deg, transparent, rgba(0,0,0,.25));
 }
 .brand{display:flex; align-items:center; gap:10px}
 .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 14px rgba(179,136,255,.9)}
-.pill{
-  padding:6px 10px; border-radius:999px; text-decoration:none; color:#cdd3df;
-  border:1px solid var(--border); background:rgba(255,255,255,.04); font-size:12px;
-}
+.pill{padding:6px 10px;border-radius:999px;text-decoration:none;color:#cdd3df;border:1px solid var(--border);background:rgba(255,255,255,.04);font-size:12px}
 
-/* Hero layout (desktop/tablet) */
+/* Center the frame on page (desktop & mobile) */
 .hero{
-  min-height:calc(100vh - var(--navH));
-  display:grid; place-items:center; gap:18px; text-align:center;
-  padding:18px 16px 32px;
+  min-height:calc(100dvh - var(--navH));
+  display:grid; place-items:center;
+  padding:16px;
 }
 
-/* Framed media on large screens */
+/* The media frame */
 .hero-frame{
   position:relative;
-  width:min(980px,92vw);
-  aspect-ratio:16/9;
+  width:min(980px, 94vw);
+  /* keep a nice max height on all devices */
+  max-height:calc(100dvh - var(--navH) - 28px);
   margin:0;
-  border-radius:20px; border:1px solid var(--border);
-  overflow:hidden;
-  box-shadow:0 24px 48px rgba(0,0,0,.45);
+  display:grid; place-items:center;
+}
+
+/* GIF/video styles */
+.hero-media{
+  width:100%; height:auto; display:block;
+  max-height:inherit; object-fit:contain; object-position:center;
+  border-radius:18px; border:1px solid var(--border);
+  box-shadow:0 22px 48px rgba(0,0,0,.45);
   background:rgba(255,255,255,.02);
 }
 
-/* Video / GIF */
-.hero-anim, .hero-fallback{
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;              /* desktop: fill nicely, slight crop */
-  display:block;
+/* Overlay sits INSIDE the frame and uses the same border radius */
+.overlay{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end; gap:14px; padding:14px;
+  pointer-events:none; /* so taps drag the knob unless on the knob */
 }
-.hero-fallback{ display:none; }
+.title{pointer-events:none; text-align:center; text-shadow:0 2px 10px rgba(0,0,0,.45)}
+.title h1{margin:0; font-weight:900; letter-spacing:.2px; font-size:clamp(28px,5vw,48px)}
+.title .tag{margin:6px 0 0; color:var(--muted); font-size:clamp(12px,2.6vw,16px)}
 
-.copy h1{font-size:clamp(28px,6vw,64px); margin:10px 0 6px; letter-spacing:.2px; font-weight:900}
-.copy p{margin:0; color:var(--muted)}
-
-/* Swipe */
-.swipe{display:grid; gap:12px; width:min(720px,92vw); margin-top:6px}
+/* Swipe control (inside the frame) */
+.swipe{width:min(720px, 92%); pointer-events:auto}
 .track{
   position:relative; height:64px; border-radius:18px;
-  background:rgba(255,255,255,.04); border:1px solid var(--border);
-  overflow:hidden;
+  background:rgba(6,8,14,.65); border:1px solid var(--border); overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
 }
-.track::before{
-  content:""; position:absolute; inset:0 100% 0 0; background:linear-gradient(90deg, rgba(179,136,255,.25), rgba(126,87,194,.25));
-  transition:inset .18s ease; pointer-events:none;
-}
-.track.fill::before{ inset:0 0 0 0; }
-
-.hint{
-  position:absolute; inset:0; display:grid; place-items:center;
-  color:#cdd3df; pointer-events:none; font-weight:700;
-}
+.hint{position:absolute; inset:0; display:grid; place-items:center; color:#cdd3df; font-weight:700; pointer-events:none}
 .knob{
-  position:absolute; inset:4px auto 4px 4px; width:120px; border-radius:14px;
+  position:absolute; left:4px; top:4px; bottom:4px; width:120px; border-radius:14px;
   background:linear-gradient(180deg,var(--accent),var(--accent2));
   border:1px solid rgba(179,136,255,.28); color:#fff; font-weight:900;
   display:grid; place-items:center; font-size:28px; user-select:none; cursor:grab;
   box-shadow:0 10px 24px rgba(179,136,255,.28);
-  transition:transform .15s ease, left .15s ease;
+  transition:transform .15s ease;
 }
 .knob:active{cursor:grabbing; transform:scale(.98)}
-.knob.success{ background:linear-gradient(180deg,#6EE7B7,#34D399); border-color:rgba(110,231,183,.35); }
 
-/* Reduced motion */
-@media (prefers-reduced-motion:reduce){
-  *{animation:none!important; transition:none!important}
+/* Reduce caption text on very small phones */
+@media (max-width:420px){
+  .title .tag{display:none}
 }
 
-/* Safety */
-body, .hero, .hero-frame, .hero-anim, .hero-fallback{
-  filter:none !important; backdrop-filter:none !important;
-}
-
-/* ========= MOBILE: center GIF vertically, keep swipe pinned ========= */
-@media (max-width: 680px){
-  :root{
-    --swipeH: 96px;                     /* total swipe footprint (height + spacing) */
-  }
-
-  /* Make the hero a full-viewport flex column:
-     - reserve bottom padding for the fixed swipe bar
-     - center the GIF area vertically */
-  .hero{
-    min-height: calc(100svh - var(--navH));
-    padding: 12px 12px calc(var(--swipeH) + env(safe-area-inset-bottom,0));
-    display: flex;
-    align-items: center;
-    justify-content: center;            /* vertical centering */
-    gap: 12px;
-  }
-
-  /* Center the framed media; size to fit remaining height */
-  .hero-frame{
-    max-width: 96vw;
-    max-height: calc(100svh - var(--navH) - var(--swipeH) - 24px);
-    width: auto;
-    height: auto;
-    border: 0;
-    border-radius: 14px;
-    box-shadow: 0 18px 40px rgba(0,0,0,.35);
-    background: transparent;
-    overflow: hidden;
-  }
-
-  /* Show entire GIF/video (no crop) and center it */
-  .hero-anim,
-  .hero-fallback{
-    position: static;
-    width: 100%;
-    height: 100%;
-    object-fit: contain !important;
-    object-position: center center !important;
-    display: block;
-  }
-
-  /* Optional: hide heading on phones to maximize canvas */
-  .copy{ display:none; }
-
-  /* Pin swipe at the absolute bottom, not affecting layout height */
-  .swipe{
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(env(safe-area-inset-bottom,0) + 12px);
-    width: min(680px, 94vw);
-    z-index: 20;
-    margin: 0;
-  }
-}
+/* Safety: ensure no accidental global blur */
+body, .hero, .hero-frame, .hero-media{filter:none!important;backdrop-filter:none!important}
