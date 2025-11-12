@@ -3,7 +3,7 @@
   --text:#e6e7eb; --muted:#94a3b8;
   --accent:#B388FF; --accent2:#7E57C2;
   --border:rgba(255,255,255,.08);
-  --navH:56px;                 /* top bar height for layout math */
+  --navH:56px;                 /* top bar height */
 }
 
 *{box-sizing:border-box}
@@ -51,7 +51,7 @@ body{
 .hero-anim, .hero-fallback{
   position:absolute; inset:0;
   width:100%; height:100%;
-  object-fit:cover;              /* fill nicely, no distortion */
+  object-fit:cover;              /* desktop: fill nicely */
   display:block;
 }
 .hero-fallback{ display:none; }
@@ -97,30 +97,50 @@ body, .hero, .hero-frame, .hero-anim, .hero-fallback{
   filter:none !important; backdrop-filter:none !important;
 }
 
-/* ========= FULL-BLEED MOBILE ========= */
+/* ========= FULL-BLEED MOBILE (portrait & landscape) ========= */
 @media (max-width: 680px){
   .hero{
     padding:0;
     align-content:start;
+    min-height:unset;
   }
-  /* Make the media edge-to-edge and tall */
+
+  /* Edge-to-edge media; leave space for swipe control.
+     Use 100dvh to avoid iOS address-bar jumps. */
   .hero-frame{
     width:100vw;
-    height:calc(100vh - var(--navH) - 120px); /* leave room for swipe */
+    height:calc(100dvh - var(--navH) - 120px);
     max-width:none;
     aspect-ratio:auto;
-    border:none;
+    border:0;
     border-radius:0;
     box-shadow:none;
+    background:transparent;
   }
-  .copy{ display:none; } /* optional – keeps layout clean on phones */
-  /* Pin the swipe control above the safe-area */
+
+  /* Show the entire GIF/video, centered (no cropping on phones) */
+  .hero-anim,
+  .hero-fallback{
+    object-fit:contain !important;
+    object-position:center center !important;
+  }
+
+  .copy{ display:none; } /* optional */
+
+  /* Pin the swipe control above safe area */
   .swipe{
     position:fixed;
     left:50%; transform:translateX(-50%);
     bottom:calc(env(safe-area-inset-bottom,0) + 16px);
     width:min(680px,92vw);
     z-index:5;
-    margin-top:0;
+    margin:0;
+  }
+}
+
+/* Helpful tweak for very short landscapes (e.g., iPhone landscape) */
+@media (max-height: 420px) and (orientation: landscape){
+  .hero-frame{
+    height:calc(100dvh - var(--navH) - 80px);
   }
 }
