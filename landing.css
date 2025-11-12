@@ -3,6 +3,7 @@
   --text:#e6e7eb; --muted:#94a3b8;
   --accent:#B388FF; --accent2:#7E57C2;
   --border:rgba(255,255,255,.08);
+  --navH:56px;                 /* top bar height for layout math */
 }
 
 *{box-sizing:border-box}
@@ -27,27 +28,32 @@ body{
   border:1px solid var(--border); background:rgba(255,255,255,.04); font-size:12px;
 }
 
-/* Hero layout */
+/* Hero layout (desktop/tablet) */
 .hero{
-  min-height:calc(100vh - 76px);
+  min-height:calc(100vh - var(--navH));
   display:grid; place-items:center; gap:18px; text-align:center;
   padding:18px 16px 32px;
 }
 
-/* Frame around the animation (adds border, radius, shadow) */
+/* Framed media on large screens */
 .hero-frame{
-  width:min(880px,92vw); aspect-ratio:16/9; margin:0;
+  position:relative;
+  width:min(980px,92vw);
+  aspect-ratio:16/9;
+  margin:0;
   border-radius:20px; border:1px solid var(--border);
-  overflow:hidden; box-shadow:0 24px 48px rgba(0,0,0,.45);
-  position:relative; background:rgba(255,255,255,.02);
+  overflow:hidden;
+  box-shadow:0 24px 48px rgba(0,0,0,.45);
+  background:rgba(255,255,255,.02);
 }
 
-/* Video + image share same presentation */
+/* Video / GIF share the same presentation */
 .hero-anim, .hero-fallback{
-  width:100%; height:100%; object-fit:cover; display:block;
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;              /* fill nicely, no distortion */
+  display:block;
 }
-
-/* Hide fallback image by default; JS will show it on error */
 .hero-fallback{ display:none; }
 
 .copy h1{font-size:clamp(28px,6vw,64px); margin:10px 0 6px; letter-spacing:.2px; font-weight:900}
@@ -70,7 +76,6 @@ body{
   position:absolute; inset:0; display:grid; place-items:center;
   color:#cdd3df; pointer-events:none; font-weight:700;
 }
-
 .knob{
   position:absolute; inset:4px auto 4px 4px; width:120px; border-radius:14px;
   background:linear-gradient(180deg,var(--accent),var(--accent2));
@@ -82,13 +87,6 @@ body{
 .knob:active{cursor:grabbing; transform:scale(.98)}
 .knob.success{ background:linear-gradient(180deg,#6EE7B7,#34D399); border-color:rgba(110,231,183,.35); }
 
-.fallback{display:flex; justify-content:center}
-.btn{
-  padding:12px 16px; border-radius:12px; color:#fff; font-weight:800; text-decoration:none;
-  background:linear-gradient(180deg,var(--accent),var(--accent2));
-  border:1px solid rgba(179,136,255,.18);
-}
-
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important; transition:none!important}
@@ -97,4 +95,32 @@ body{
 /* Safety: ensure no page-wide blur leaks in */
 body, .hero, .hero-frame, .hero-anim, .hero-fallback{
   filter:none !important; backdrop-filter:none !important;
+}
+
+/* ========= FULL-BLEED MOBILE ========= */
+@media (max-width: 680px){
+  .hero{
+    padding:0;
+    align-content:start;
+  }
+  /* Make the media edge-to-edge and tall */
+  .hero-frame{
+    width:100vw;
+    height:calc(100vh - var(--navH) - 120px); /* leave room for swipe */
+    max-width:none;
+    aspect-ratio:auto;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .copy{ display:none; } /* optional – keeps layout clean on phones */
+  /* Pin the swipe control above the safe-area */
+  .swipe{
+    position:fixed;
+    left:50%; transform:translateX(-50%);
+    bottom:calc(env(safe-area-inset-bottom,0) + 16px);
+    width:min(680px,92vw);
+    z-index:5;
+    margin-top:0;
+  }
 }
