@@ -20,6 +20,7 @@ body{
   position:sticky; top:calc(0px + env(safe-area-inset-top)); z-index:10;
   display:flex; align-items:center; justify-content:space-between;
   padding:12px 16px;
+  height: var(--navH);                 /* ensure known height */
 }
 .brand{display:flex; align-items:center; gap:10px}
 .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 14px rgba(179,136,255,.9)}
@@ -47,11 +48,11 @@ body{
   background:rgba(255,255,255,.02);
 }
 
-/* Video / GIF share the same presentation */
+/* Video / GIF */
 .hero-anim, .hero-fallback{
   position:absolute; inset:0;
   width:100%; height:100%;
-  object-fit:cover;              /* desktop: fill nicely */
+  object-fit:cover;              /* desktop: fill nicely, slight crop */
   display:block;
 }
 .hero-fallback{ display:none; }
@@ -87,43 +88,40 @@ body{
 .knob:active{cursor:grabbing; transform:scale(.98)}
 .knob.success{ background:linear-gradient(180deg,#6EE7B7,#34D399); border-color:rgba(110,231,183,.35); }
 
-/* Accessibility: reduced motion */
+/* Reduced motion */
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important; transition:none!important}
 }
 
-/* Safety: ensure no page-wide blur leaks in */
+/* Safety */
 body, .hero, .hero-frame, .hero-anim, .hero-fallback{
   filter:none !important; backdrop-filter:none !important;
 }
+
 /* ========= MOBILE: center GIF vertically, keep swipe pinned ========= */
 @media (max-width: 680px){
   :root{
-    --swipeH: 96px;          /* height of swipe control incl. spacing */
-    --mobilePad: 12px;       /* small top/bottom breathing room */
+    --swipeH: 96px;                     /* total swipe footprint (height + spacing) */
   }
 
-  /* Make the hero fill the viewport below the top bar, and split it into:
-     [ available space for GIF ]  [ swipe bar ] */
+  /* Make the hero a full-viewport flex column:
+     - reserve bottom padding for the fixed swipe bar
+     - center the GIF area vertically */
   .hero{
-    min-height: calc(100dvh - var(--navH));
-    padding: 0 var(--mobilePad);
-    display: grid;
-    grid-template-rows: 1fr auto;   /* centerable area + swipe */
-    align-items: center;            /* vertical centering for the GIF area */
-    row-gap: 12px;
+    min-height: calc(100svh - var(--navH));
+    padding: 12px 12px calc(var(--swipeH) + env(safe-area-inset-bottom,0));
+    display: flex;
+    align-items: center;
+    justify-content: center;            /* vertical centering */
+    gap: 12px;
   }
 
-  /* Center the framed media in the free area */
+  /* Center the framed media; size to fit remaining height */
   .hero-frame{
-    justify-self: center;           /* center horizontally */
-    align-self: center;             /* center vertically within the 1fr row */
-    /* allow it to grow but never overflow the space above swipe */
-    max-width: 94vw;
-    max-height: calc(100dvh - var(--navH) - var(--swipeH) - (2 * var(--mobilePad)));
-    width: auto;                    /* let aspect control the size */
+    max-width: 96vw;
+    max-height: calc(100svh - var(--navH) - var(--swipeH) - 24px);
+    width: auto;
     height: auto;
-    aspect-ratio: auto;             /* use intrinsic ratio from media */
     border: 0;
     border-radius: 14px;
     box-shadow: 0 18px 40px rgba(0,0,0,.35);
@@ -131,7 +129,7 @@ body, .hero, .hero-frame, .hero-anim, .hero-fallback{
     overflow: hidden;
   }
 
-  /* Show entire GIF/video, centered (no cropping) */
+  /* Show entire GIF/video (no crop) and center it */
   .hero-anim,
   .hero-fallback{
     position: static;
@@ -142,16 +140,17 @@ body, .hero, .hero-frame, .hero-anim, .hero-fallback{
     display: block;
   }
 
-  /* Hide the headline on phones to maximize canvas (optional) */
+  /* Optional: hide heading on phones to maximize canvas */
   .copy{ display:none; }
 
-  /* Pin the swipe control at the bottom above the safe area */
+  /* Pin swipe at the absolute bottom, not affecting layout height */
   .swipe{
-    position: sticky;               /* keeps it at bottom of the grid */
-    bottom: calc(env(safe-area-inset-bottom, 0) + var(--mobilePad));
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom,0) + 12px);
     width: min(680px, 94vw);
-    justify-self: center;
+    z-index: 20;
     margin: 0;
   }
 }
-
