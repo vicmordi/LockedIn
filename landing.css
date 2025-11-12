@@ -96,51 +96,62 @@ body{
 body, .hero, .hero-frame, .hero-anim, .hero-fallback{
   filter:none !important; backdrop-filter:none !important;
 }
-
-/* ========= FULL-BLEED MOBILE (portrait & landscape) ========= */
+/* ========= MOBILE: center GIF vertically, keep swipe pinned ========= */
 @media (max-width: 680px){
+  :root{
+    --swipeH: 96px;          /* height of swipe control incl. spacing */
+    --mobilePad: 12px;       /* small top/bottom breathing room */
+  }
+
+  /* Make the hero fill the viewport below the top bar, and split it into:
+     [ available space for GIF ]  [ swipe bar ] */
   .hero{
-    padding:0;
-    align-content:start;
-    min-height:unset;
+    min-height: calc(100dvh - var(--navH));
+    padding: 0 var(--mobilePad);
+    display: grid;
+    grid-template-rows: 1fr auto;   /* centerable area + swipe */
+    align-items: center;            /* vertical centering for the GIF area */
+    row-gap: 12px;
   }
 
-  /* Edge-to-edge media; leave space for swipe control.
-     Use 100dvh to avoid iOS address-bar jumps. */
+  /* Center the framed media in the free area */
   .hero-frame{
-    width:100vw;
-    height:calc(100dvh - var(--navH) - 120px);
-    max-width:none;
-    aspect-ratio:auto;
-    border:0;
-    border-radius:0;
-    box-shadow:none;
-    background:transparent;
+    justify-self: center;           /* center horizontally */
+    align-self: center;             /* center vertically within the 1fr row */
+    /* allow it to grow but never overflow the space above swipe */
+    max-width: 94vw;
+    max-height: calc(100dvh - var(--navH) - var(--swipeH) - (2 * var(--mobilePad)));
+    width: auto;                    /* let aspect control the size */
+    height: auto;
+    aspect-ratio: auto;             /* use intrinsic ratio from media */
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    background: transparent;
+    overflow: hidden;
   }
 
-  /* Show the entire GIF/video, centered (no cropping on phones) */
+  /* Show entire GIF/video, centered (no cropping) */
   .hero-anim,
   .hero-fallback{
-    object-fit:contain !important;
-    object-position:center center !important;
+    position: static;
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block;
   }
 
-  .copy{ display:none; } /* optional */
+  /* Hide the headline on phones to maximize canvas (optional) */
+  .copy{ display:none; }
 
-  /* Pin the swipe control above safe area */
+  /* Pin the swipe control at the bottom above the safe area */
   .swipe{
-    position:fixed;
-    left:50%; transform:translateX(-50%);
-    bottom:calc(env(safe-area-inset-bottom,0) + 16px);
-    width:min(680px,92vw);
-    z-index:5;
-    margin:0;
+    position: sticky;               /* keeps it at bottom of the grid */
+    bottom: calc(env(safe-area-inset-bottom, 0) + var(--mobilePad));
+    width: min(680px, 94vw);
+    justify-self: center;
+    margin: 0;
   }
 }
 
-/* Helpful tweak for very short landscapes (e.g., iPhone landscape) */
-@media (max-height: 420px) and (orientation: landscape){
-  .hero-frame{
-    height:calc(100dvh - var(--navH) - 80px);
-  }
-}
