@@ -1,4 +1,3 @@
-
 let durationMs = 0;
 
 const presetRow = document.getElementById('presetRow');
@@ -12,7 +11,9 @@ const standEvery = document.getElementById('standEvery');
 const standLen = document.getElementById('standLen');
 const enableHeadRest = document.getElementById('enableHeadRest');
 const enableStand = document.getElementById('enableStand');
-const enableQuotes = document.getElementById('enableQuotes');
+
+// UPDATED: quotes toggle id
+const enableBreakQuotes = document.getElementById('enableBreakQuotes');
 
 const tel1 = document.getElementById('tel1');
 const tel2 = document.getElementById('tel2');
@@ -125,7 +126,8 @@ form.addEventListener('submit', (e)=>{
   const cfg = {
     durationMs,
     pin: (pinField.value||'').trim(),
-    enableQuotes: !!enableQuotes.checked,
+    // UPDATED: new flag; default true if element missing
+    enableBreakQuotes: enableBreakQuotes ? !!enableBreakQuotes.checked : true,
     microEveryMin,
     standEveryMin,
     standLenMin,

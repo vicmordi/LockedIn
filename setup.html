@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Locked In — Setup</title>
+  <title>LockedIn — Setup</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="stylesheet" href="setup.css" />
+  <!-- NEW: shared padlock animation styles -->
+  <link rel="stylesheet" href="lock.css" />
 </head>
 <body>
   <div class="app card">
@@ -13,7 +15,7 @@
       <div class="brand">
         <span class="dot"></span>
         <div>
-          <h1>Locked In — Setup</h1>
+          <h1>LockedIn — Setup</h1>
           <p class="muted">Fill this form first. The timer page comes after.</p>
         </div>
       </div>
@@ -21,6 +23,27 @@
         <a class="pill" href="history.html">History</a>
       </nav>
     </header>
+
+    <!-- NEW: lock banner ABOVE the form -->
+    <div class="lock-banner" style="display:flex;align-items:center;gap:12px;justify-content:center;margin:8px 0 14px">
+      <!-- Keep your SVG (animated via lock.css) -->
+      <div id="setupLock" class="lock-anim intro" aria-hidden="true">
+        <svg viewBox="0 0 120 140" class="lock-svg" role="img" aria-label="Locking animation">
+          <!-- shackle (opens/closes) -->
+          <path class="shackle" d="M30 54 a30 30 0 1 1 60 0 v18" fill="none" stroke-width="8" stroke-linecap="round"/>
+          <!-- body -->
+          <rect class="body" x="22" y="60" rx="12" ry="12" width="76" height="62" />
+          <!-- keyhole -->
+          <g class="keyhole">
+            <circle cx="60" cy="92" r="7"></circle>
+            <rect x="56" y="92" width="8" height="18" rx="4"></rect>
+          </g>
+          <!-- soft glow -->
+          <ellipse class="glow" cx="60" cy="128" rx="34" ry="6"></ellipse>
+        </svg>
+      </div>
+      <div class="muted" style="font-weight:700">Secure focus mode</div>
+    </div>
 
     <form id="setupForm" class="stack">
       <!-- Duration -->
@@ -86,12 +109,13 @@
         </div>
         <p class="note">Breaks are nudges—no social scrolling.</p>
 
+        <!-- UPDATED: Quotes control -->
         <div class="grid-2" style="margin-top:10px">
           <label class="check">
-            <input type="checkbox" id="enableQuotes" checked />
-            <span>Show motivational quotes every 30 minutes</span>
+            <input type="checkbox" id="enableBreakQuotes" checked />
+            <span>Show motivational quotes during breaks (when paused)</span>
           </label>
-          <span class="note">Quotes auto-dismiss.</span>
+          <span class="note">Quotes appear only while paused.</span>
         </div>
       </section>
 
@@ -136,7 +160,7 @@
   <script src="alerts.js"></script>
   <script src="setup.js"></script>
 
-  <!-- Small inline script to wire sound settings + test -->
+  <!-- Sound settings + replay lock animation on submit -->
   <script>
     (function(){
       const LS_ENABLED = 'lockedin.sound.enabled';
@@ -145,6 +169,8 @@
       const elEnabled = document.getElementById('soundEnabled');
       const elVolume  = document.getElementById('soundVolume');
       const elTest    = document.getElementById('testSounds');
+      const form      = document.getElementById('setupForm');
+      const setupLock = document.getElementById('setupLock');
 
       // Load saved settings
       const en = localStorage.getItem(LS_ENABLED);
@@ -170,7 +196,6 @@
             LockedInAlerts.loadSettings();
             LockedInAlerts.setEnabled(elEnabled.checked);
             LockedInAlerts.setVolume(elVolume.value);
-            // Preview a quick suite
             LockedInAlerts.play('break');
             setTimeout(()=>LockedInAlerts.play('stand'), 600);
             setTimeout(()=>LockedInAlerts.play('headrest'), 1200);
@@ -178,6 +203,14 @@
           }
         } catch(e){}
       });
+
+      // Replay the lock “click shut” just before we navigate to timer
+      form.addEventListener('submit', () => {
+        if (!setupLock) return;
+        setupLock.classList.remove('intro');
+        void setupLock.offsetWidth;         // reflow to restart animation
+        setupLock.classList.add('intro');
+      }, { passive: true });
     })();
   </script>
 </body>

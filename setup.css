@@ -43,7 +43,7 @@ body{
   z-index:20;
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:10px 12px;
-  margin:-8px -8px 16px -8px;      /* stretch to edges a bit */
+  margin:-8px -8px 16px -8px;
   background:var(--card);
   backdrop-filter:blur(14px);
   border:1px solid var(--border);
@@ -98,4 +98,76 @@ input,select,textarea{
     padding-top:calc(12px + env(safe-area-inset-top));
   }
   .card{padding:12px}
+}
+
+/* =========================================================
+   Animated Padlock (Setup page)
+   HTML container: <div id="setupLock" class="lock-anim intro"> ... </div>
+   SVG inside uses classes: .shackle .body .keyhole .glow
+   ========================================================= */
+.lock-anim{
+  display:flex; align-items:center; justify-content:center;
+  margin-left:8px; /* sits after title */
+  width:64px; height:64px;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+}
+.lock-anim .lock-svg{
+  width:56px; height:56px;
+  overflow:visible;
+}
+
+/* Colors to match theme */
+.lock-anim .shackle{ stroke: var(--accent); fill:none; }
+.lock-anim .body{ fill: rgba(255,255,255,.06); stroke: var(--border); }
+.lock-anim .keyhole{ fill: var(--accent); }
+.lock-anim .glow{ fill: radial-gradient(closest-side, rgba(179,136,255,.35), rgba(179,136,255,0)); opacity:.55 }
+
+/* Ensure transforms behave relative to vector bounds */
+.lock-anim .shackle,
+.lock-anim .body,
+.lock-anim .keyhole{
+  transform-box: fill-box;
+  transform-origin: 60px 54px; /* hinge point near top-center */
+}
+
+/* --- Intro animation sequence (replays when .intro re-added) --- */
+.lock-anim.intro .shackle{
+  animation: shackleClose .9s ease-out forwards;
+}
+.lock-anim.intro .body{
+  animation: bodyPop .9s cubic-bezier(.2,.8,.2,1) .05s both;
+}
+.lock-anim.intro .keyhole{
+  animation: keyPulse .9s ease-out .2s both;
+}
+.lock-anim.intro .glow{
+  animation: glowPulse 1.4s ease-out .1s both;
+}
+
+/* Keyframes */
+@keyframes shackleClose{
+  0%   { transform: rotate(-24deg) translateY(-2px); opacity:.9 }
+  45%  { transform: rotate(-6deg)  translateY(-1px); }
+  100% { transform: rotate(0deg)   translateY(0); }
+}
+@keyframes bodyPop{
+  0%   { transform: translateY(6px) scale(.92); opacity:0 }
+  60%  { transform: translateY(0) scale(1.02); opacity:1 }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes keyPulse{
+  0%   { transform: scale(.7); opacity:.6; }
+  50%  { transform: scale(1.08); opacity:1; }
+  100% { transform: scale(1); }
+}
+@keyframes glowPulse{
+  0%   { opacity:.0; transform: scale(.8); }
+  50%  { opacity:.7; transform: scale(1.06); }
+  100% { opacity:.45; transform: scale(1); }
+}
+
+/* Smaller on narrow phones */
+@media (max-width: 420px){
+  .lock-anim{ width:52px; height:52px; }
+  .lock-anim .lock-svg{ width:48px; height:48px; }
 }

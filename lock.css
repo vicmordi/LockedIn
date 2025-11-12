@@ -1,0 +1,36 @@
+/* Reusable padlock component: drop into any page */
+.padlock{
+  --size: 64px;
+  position:relative; width:var(--size); height:calc(var(--size) * 1.2);
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));
+  animation:floaty 3.2s ease-in-out infinite;
+}
+@keyframes floaty{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-6px)} }
+
+.padlock .shackle{
+  position:absolute; left:50%; transform:translateX(-50%);
+  top:-8px; width:calc(var(--size) * .58); height:calc(var(--size) * .58);
+  border:6px solid #cbd5ff; border-bottom:none; border-radius:18px 18px 0 0;
+  background:linear-gradient(180deg,#ffffff,#cbd5ff);
+  box-shadow:inset 0 0 10px rgba(0,0,0,.15);
+  animation:lock-snap 2.2s ease-in-out 1.4s forwards;
+}
+@keyframes lock-snap{
+  0%{ transform:translateX(-50%) translateY(0) }
+  60%{ transform:translateX(-50%) translateY(2px) }
+  100%{ transform:translateX(-50%) translateY(0) }
+}
+.padlock .body{
+  position:absolute; inset:auto 0 0 0; height:calc(var(--size) * .9);
+  margin:auto; width:var(--size); background:linear-gradient(180deg,#b388ff,#7e57c2);
+  border-radius:12px; border:1px solid rgba(255,255,255,.18);
+}
+.padlock .keyhole{
+  position:absolute; left:50%; top:38%; transform:translateX(-50%);
+  width:14px; height:14px; background:#1a1b2a; border-radius:999px;
+  box-shadow:0 18px 0 #1a1b2a; /* stem */
+}
+
+/* Tiny lock row (timer header variant) */
+.lock-row{ display:flex; align-items:center; gap:8px }
+.lock-row .txt{ color:#9aa2b2; font-size:12px }
