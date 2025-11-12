@@ -3,7 +3,7 @@
   --text:#e6e7eb; --muted:#94a3b8;
   --accent:#B388FF; --accent2:#7E57C2;
   --border:rgba(255,255,255,.10);
-  --navH:56px;
+  --navH:56px;                     /* top bar height */
 }
 
 *{box-sizing:border-box}
@@ -15,7 +15,7 @@ body{
   color:var(--text);
 }
 
-/* Top bar */
+/* top bar */
 .nav{
   position:sticky; top:calc(0px + env(safe-area-inset-top)); z-index:10;
   display:flex; align-items:center; justify-content:space-between;
@@ -26,44 +26,56 @@ body{
 .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 14px rgba(179,136,255,.9)}
 .pill{padding:6px 10px;border-radius:999px;text-decoration:none;color:#cdd3df;border:1px solid var(--border);background:rgba(255,255,255,.04);font-size:12px}
 
-/* Center the frame on page (desktop & mobile) */
+/* page section that centers the frame */
 .hero{
   min-height:calc(100dvh - var(--navH));
   display:grid; place-items:center;
-  padding:16px;
+  padding:0;                       /* no extra gaps */
 }
 
-/* The media frame */
+/* ===== THE FRAME =====
+   Fills the viewport below the nav. We cap width so desktop isn’t “too huge”. */
 .hero-frame{
   position:relative;
-  width:min(980px, 94vw);
-  /* keep a nice max height on all devices */
-  max-height:calc(100dvh - var(--navH) - 28px);
-  margin:0;
-  display:grid; place-items:center;
+  width:min(1200px, 100vw);        /* cap desktop width */
+  height:calc(100dvh - var(--navH));
+  margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
 }
 
-/* GIF/video styles */
+/* the GIF/video itself behaves like wallpaper that FITS (no crop) */
 .hero-media{
-  width:100%; height:auto; display:block;
-  max-height:inherit; object-fit:contain; object-position:center;
-  border-radius:18px; border:1px solid var(--border);
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;              /* show entire GIF */
+  object-position:center;
+  display:block;
+
+  border-radius:18px;              /* nice card feel on desktop */
+  border:1px solid var(--border);
   box-shadow:0 22px 48px rgba(0,0,0,.45);
   background:rgba(255,255,255,.02);
 }
 
-/* Overlay sits INSIDE the frame and uses the same border radius */
+/* overlay sits INSIDE the frame */
 .overlay{
-  position:absolute; inset:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:flex-end; gap:14px; padding:14px;
-  pointer-events:none; /* so taps drag the knob unless on the knob */
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  gap:14px; padding:14px;
+  pointer-events:none;
 }
 .title{pointer-events:none; text-align:center; text-shadow:0 2px 10px rgba(0,0,0,.45)}
 .title h1{margin:0; font-weight:900; letter-spacing:.2px; font-size:clamp(28px,5vw,48px)}
 .title .tag{margin:6px 0 0; color:var(--muted); font-size:clamp(12px,2.6vw,16px)}
 
-/* Swipe control (inside the frame) */
-.swipe{width:min(720px, 92%); pointer-events:auto}
+/* ===== SWIPE (INSIDE BOTTOM OF FRAME) ===== */
+.swipe{
+  width:min(720px, 92%);
+  pointer-events:auto;
+  margin-bottom:calc(env(safe-area-inset-bottom,0) + 6px);
+}
 .track{
   position:relative; height:64px; border-radius:18px;
   background:rgba(6,8,14,.65); border:1px solid var(--border); overflow:hidden;
@@ -80,10 +92,10 @@ body{
 }
 .knob:active{cursor:grabbing; transform:scale(.98)}
 
-/* Reduce caption text on very small phones */
+/* smaller phones: hide tagline to give the swipe room */
 @media (max-width:420px){
   .title .tag{display:none}
 }
 
-/* Safety: ensure no accidental global blur */
+/* safety */
 body, .hero, .hero-frame, .hero-media{filter:none!important;backdrop-filter:none!important}
