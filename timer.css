@@ -554,7 +554,7 @@ button{
   inset:0;
   display:none;
   background:radial-gradient(1000px 800px at 50% -120px,#080b18 0%,#0f1528 55%,#141c34 100%);
-  z-index:1300;
+  z-index:2000; /* ABOVE toasts + everything */
   align-items:center;
   justify-content:center;
   animation:fadeIn .2s ease-out;
@@ -580,7 +580,7 @@ button{
   flex-direction:column;
   gap:12px;
   width:min(90vw,680px);
-  z-index:1500;
+  z-index:1000; /* BELOW .minimal */
 }
 .toast{
   background:rgba(18,22,40,.92);
@@ -641,6 +641,7 @@ button{
 /* Mobile & motion settings */
 @supports (height:100svh){
   body{min-height:100svh;}
+  .minimal{min-height:100svh;} /* make overlay fill full mobile viewport */
 }
 @media (max-width:720px){
   body{padding:clamp(12px,6vw,24px);}

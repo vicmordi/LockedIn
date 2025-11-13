@@ -65,6 +65,7 @@ function fmt(ms){
 }
 function phoneOk(v){ return (v || '').replace(/\s+/g, '').length >= 3; }
 
+/* === Wake lock === */
 async function enableWakeLock(){
   try{
     if ('wakeLock' in navigator){
@@ -94,14 +95,41 @@ function disableWakeLock(){
   }
 }
 
+/* === Before unload guard === */
 function hookUnload(){ window.onbeforeunload = () => 'Focus session in progress.'; }
 function unhookUnload(){ window.onbeforeunload = null; }
 
+/* === Helpers for focus mode and sound nudge === */
+function clearSoundNudge(){
+  const n = document.getElementById('soundNudge');
+  if (n && n.parentNode){
+    n.parentNode.removeChild(n);
+  }
+}
+function isFocusModeActive(){
+  return minimal && minimal.getAttribute('aria-hidden') === 'false';
+}
+
+/* === Minimal overlay === */
 function showMinimal(on){
   if (!minimal) return;
   minimal.setAttribute('aria-hidden', on ? 'false' : 'true');
+
+  // Hide toasts + sound nudge in Focus Mode so nothing sits on top of the full-screen timer
+  if (on){
+    if (toasts){
+      toasts.dataset.prevDisplay = toasts.style.display || '';
+      toasts.style.display = 'none';
+    }
+    clearSoundNudge();
+  }else{
+    if (toasts){
+      toasts.style.display = toasts.dataset.prevDisplay || '';
+    }
+  }
 }
 
+/* === Fullscreen === */
 async function enterFullscreen(){
   try{
     if (!document.fullscreenElement){
@@ -117,6 +145,7 @@ async function exitFullscreen(){
   }catch(_){}
 }
 
+/* === Focus Mode === */
 async function enterFocusMode(){
   if (paused) return;
   showMinimal(true);
@@ -127,6 +156,7 @@ async function exitFocusMode(){
   await exitFullscreen();
 }
 
+/* === Phase & UI === */
 function phaseName(){
   switch (phase){
     case 'micro': return 'Micro break';
@@ -160,6 +190,7 @@ function updateUI(){
   }
 }
 
+/* === History === */
 function loadHistory(){
   try{
     return JSON.parse(localStorage.getItem('li_history') || '[]');
@@ -193,6 +224,7 @@ function renderHistory(){
   }).join('') || '<div class="history-empty">No sessions yet. Complete one to start your streak.</div>';
 }
 
+/* === Break quotes === */
 const BREAK_QUOTES = [
   'Lock in now, cash out later.',
   'Discipline today becomes freedom tomorrow.',
@@ -308,6 +340,7 @@ function showQuotesDuringPause(){
   }
 }
 
+/* === Break scheduling === */
 function scheduleBreaks(){
   const now = Date.now();
   nextMicroAt = cfg.microEveryMin ? now + cfg.microEveryMin * 60 * 1000 : null;
@@ -331,9 +364,17 @@ function initAlerts(){
     syncSoundPill();
   }catch(_){}
 }
+
 function ensureAudioReady(){
   if (!window.LockedInAlerts) return;
   try{
+    // Don't show nudge in Focus Mode
+    if (isFocusModeActive()) return;
+
+    // Only show once ever
+    const dismissed = localStorage.getItem('lockedin.sound.nudge.dismissed') === 'true';
+    if (dismissed) return;
+
     const ctx = LockedInAlerts.ctx;
     const needsTap = !ctx || (ctx && ctx.state !== 'running');
     const existing = document.getElementById('soundNudge');
@@ -359,7 +400,10 @@ function ensureAudioReady(){
     const unlock = () => {
       try{ LockedInAlerts.init(); }catch(_){}
       const ok = LockedInAlerts.ctx && LockedInAlerts.ctx.state === 'running';
-      if (ok && n.parentNode) n.parentNode.removeChild(n);
+      if (ok && n.parentNode){
+        n.parentNode.removeChild(n);
+        localStorage.setItem('lockedin.sound.nudge.dismissed', 'true');
+      }
       window.removeEventListener('click', unlock, true);
       window.removeEventListener('touchstart', unlock, true);
       syncSoundPill();
@@ -368,6 +412,7 @@ function ensureAudioReady(){
     window.addEventListener('touchstart', unlock, true);
   }catch(_){}
 }
+
 function syncSoundPill(){
   if (!toggleSound || !window.LockedInAlerts) return;
   const enabled = localStorage.getItem('lockedin.sound.enabled') !== 'false';
@@ -384,7 +429,7 @@ if (toggleSound){
   });
 }
 
-/* === Break scheduling === */
+/* === Break triggers === */
 function maybeTriggerBreak(now){
   if (paused) return;
 
@@ -506,6 +551,7 @@ function endAndNavigate(url, outcomeLabel){
   window.location.href = url;
 }
 
+/* === Tick === */
 function tick(){
   const now = Date.now();
   remainingMs = Math.max(0, (endAt ?? now) - now);
