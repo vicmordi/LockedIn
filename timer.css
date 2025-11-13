@@ -399,6 +399,7 @@ button{
   position:relative;
 }
 .clock-shell .quote-card{
+.clock-shell .quote-card{
   position:absolute;
   inset:auto 50% 14%;
   transform:translateX(-50%) translateY(14px);
@@ -593,7 +594,31 @@ button{
     box-shadow:none;
     border-radius:20px;
   }
-  .clock-shell{width:min(360px,90vw);}
+  .grid{gap:18px;}
+  .panel{padding:18px;}
+  .clock-shell{
+    width:min(330px,88vw);
+  }
+  .clock-shell::before{inset:12px;}
+  .clock-shell::after{inset:calc(12px + 12%);}
+  .clock-shell .quote-card{
+    width:calc(100% - 36px);
+    transform:translate(-50%,20px);
+  }
+  .clock-shell.quotes-visible .quote-card.expanded{
+    transform:translate(-50%,-4px);
+  }
+  .timer{
+    width:68%;
+    max-width:220px;
+    font-size:clamp(26px,12vw,56px);
+  }
+  .panel-secondary{
+    gap:16px;
+  }
+  .history{
+    max-height:220px;
+  }
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;}
