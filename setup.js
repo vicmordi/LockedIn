@@ -12,7 +12,6 @@ const standLen = document.getElementById('standLen');
 const enableHeadRest = document.getElementById('enableHeadRest');
 const enableStand = document.getElementById('enableStand');
 
-// UPDATED: quotes toggle id
 const enableBreakQuotes = document.getElementById('enableBreakQuotes');
 
 const tel1 = document.getElementById('tel1');
@@ -23,42 +22,82 @@ const sessionDesc = document.getElementById('sessionDesc');
 const form = document.getElementById('setupForm');
 const errorsEl = document.getElementById('errors');
 
-// Sound controls (from setup.html Sound alerts panel)
 const soundEnabledEl = document.getElementById('soundEnabled');
 const soundVolumeEl  = document.getElementById('soundVolume');
 
 const LS_ENABLED = 'lockedin.sound.enabled';
 const LS_VOLUME  = 'lockedin.sound.volume';
 
+const presetButtons = presetRow ? [...presetRow.querySelectorAll('.chip')] : [];
+presetButtons.forEach(btn => btn.setAttribute('aria-pressed','false'));
+
+function clearPresetStates(){
+  presetButtons.forEach(btn => {
+    btn.dataset.active = 'false';
+    btn.setAttribute('aria-pressed','false');
+  });
+}
+
 function phoneOk(v){ return (v||'').replace(/\s+/g,'').length >= 3; }
 
 function showErrors(list){
-  if(!list.length){ errorsEl.classList.add('hidden'); errorsEl.textContent = ''; return; }
+  if(!list.length){
+    errorsEl.classList.add('hidden');
+    errorsEl.textContent = '';
+    errorsEl.setAttribute('aria-hidden','true');
+    return;
+  }
   errorsEl.innerHTML = 'Please fix:<br>• ' + list.join('<br>• ');
   errorsEl.classList.remove('hidden');
+  errorsEl.setAttribute('aria-hidden','false');
 }
 
 function validate(){
   const errs = [];
+  let focusTarget = null;
   const pin = (pinField.value||'').trim();
 
-  if(!durationMs || durationMs < 60000) errs.push('Choose a focus duration (≥ 1 minute).');
-  if(pin.length < 4 || !/^\d+$/.test(pin)) errs.push('PIN must be at least 4 digits (numbers only).');
+  if(!durationMs || durationMs < 60000){
+    errs.push('Choose a focus duration (≥ 1 minute).');
+    focusTarget = focusTarget || (customMinutes.value ? customMinutes : presetButtons[0]);
+  }
+  if(pin.length < 4 || !/^\d+$/.test(pin)){
+    errs.push('PIN must be at least 4 digits (numbers only).');
+    focusTarget = focusTarget || pinField;
+  }
 
   if(breakPlan.value === 'custom'){
     const me = +microEvery.value || 0;
     const se = +standEvery.value || 0;
     const sl = +standLen.value || 0;
-    if(enableHeadRest.checked && me !== 0 && me < 10) errs.push('Head/eye rest every must be 0 or ≥ 10 min.');
-    if(enableStand.checked && se !== 0 && se < 30) errs.push('Stand every must be 0 or ≥ 30 min.');
-    if(enableStand.checked && sl < 1) errs.push('Stand break length must be ≥ 1 min.');
+    if(enableHeadRest.checked && me !== 0 && me < 10){
+      errs.push('Head/eye rest every must be 0 or ≥ 10 min.');
+      focusTarget = focusTarget || microEvery;
+    }
+    if(enableStand.checked && se !== 0 && se < 30){
+      errs.push('Stand every must be 0 or ≥ 30 min.');
+      focusTarget = focusTarget || standEvery;
+    }
+    if(enableStand.checked && sl < 1){
+      errs.push('Stand break length must be ≥ 1 min.');
+      focusTarget = focusTarget || standLen;
+    }
   }
 
   const phones = [tel1.value, tel2.value, tel3.value].filter(phoneOk);
-  if(phones.length < 1) errs.push('Enter at least one emergency contact.');
+  if(phones.length < 1){
+    errs.push('Enter at least one emergency contact.');
+    focusTarget = focusTarget || tel1;
+  }
 
   showErrors(errs);
-  return errs.length === 0;
+  if(errs.length){
+    if (focusTarget && typeof focusTarget.focus === 'function'){
+      focusTarget.focus({ preventScroll: false });
+    }
+    return false;
+  }
+  return true;
 }
 
 function applyPlanUI(){
@@ -67,8 +106,9 @@ function applyPlanUI(){
 
 presetRow.addEventListener('click', e=>{
   const btn = e.target.closest('.chip'); if(!btn) return;
-  [...presetRow.querySelectorAll('.chip')].forEach(c=>c.dataset.active='false');
+  clearPresetStates();
   btn.dataset.active = 'true';
+  btn.setAttribute('aria-pressed','true');
   const m = parseInt(btn.dataset.min,10);
   durationMs = m * 60 * 1000;
   customMinutes.value = '';
@@ -78,7 +118,9 @@ customMinutes.addEventListener('input', ()=>{
   const v = +customMinutes.value;
   if(!isNaN(v) && v > 0){
     durationMs = v * 60 * 1000;
-    [...presetRow.querySelectorAll('.chip')].forEach(c=>c.dataset.active='false');
+    clearPresetStates();
+  }else{
+    durationMs = 0;
   }
 });
 

@@ -10,151 +10,138 @@
   <link rel="stylesheet" href="lock.css" />
 </head>
 <body>
-  <div class="app card">
-    <header class="header">
-      <div class="brand">
-        <span class="dot"></span>
-        <div>
-          <h1>LockedIn — Setup</h1>
-          <p class="muted">Fill this form first. The timer page comes after.</p>
+  <main class="layout">
+    <div class="app card">
+      <header class="header">
+        <div class="brand">
+          <span class="dot"></span>
+          <div>
+            <h1>LockedIn — Setup</h1>
+            <p class="muted">Dial in your session, then slide into focus.</p>
+          </div>
         </div>
-      </div>
-      <nav class="nav">
-        <a class="pill" href="history.html">History</a>
-      </nav>
-    </header>
+        <nav class="nav">
+          <a class="pill" href="history.html">History</a>
+        </nav>
+      </header>
 
-    <!-- NEW: lock banner ABOVE the form -->
-    <div class="lock-banner" style="display:flex;align-items:center;gap:12px;justify-content:center;margin:8px 0 14px">
-      <!-- Keep your SVG (animated via lock.css) -->
-      <div id="setupLock" class="lock-anim intro" aria-hidden="true">
-        <svg viewBox="0 0 120 140" class="lock-svg" role="img" aria-label="Locking animation">
-          <!-- shackle (opens/closes) -->
-          <path class="shackle" d="M30 54 a30 30 0 1 1 60 0 v18" fill="none" stroke-width="8" stroke-linecap="round"/>
-          <!-- body -->
-          <rect class="body" x="22" y="60" rx="12" ry="12" width="76" height="62" />
-          <!-- keyhole -->
-          <g class="keyhole">
-            <circle cx="60" cy="92" r="7"></circle>
-            <rect x="56" y="92" width="8" height="18" rx="4"></rect>
-          </g>
-          <!-- soft glow -->
-          <ellipse class="glow" cx="60" cy="128" rx="34" ry="6"></ellipse>
-        </svg>
+      <div class="lock-banner">
+        <div id="setupLock" class="padlock" aria-hidden="true">
+          <div class="shackle"></div>
+          <div class="body">
+            <div class="keyhole"></div>
+          </div>
+        </div>
+        <div class="muted">Secure focus mode</div>
       </div>
-      <div class="muted" style="font-weight:700">Secure focus mode</div>
+
+      <form id="setupForm" class="stack" autocomplete="off" novalidate>
+        <section class="panel">
+          <span class="label">Focus duration</span>
+          <div id="presetRow" class="row">
+            <button type="button" class="chip" data-min="25">25m</button>
+            <button type="button" class="chip" data-min="50">50m</button>
+            <button type="button" class="chip" data-min="90">90m</button>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label class="label" for="customMinutes">Custom minutes</label>
+              <input id="customMinutes" type="number" min="1" max="600" placeholder="e.g. 45" inputmode="numeric" />
+            </div>
+            <div>
+              <label class="label" for="pin">Required passcode (min 4 digits)</label>
+              <input id="pin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Set a PIN" />
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label class="label" for="sessionDesc">Session description (optional)</label>
+          <textarea id="sessionDesc" rows="3" placeholder="e.g. ‘Deep work on resume builder, API wiring, and tests.’"></textarea>
+          <p class="note">This will appear on the Timer page and be saved in History.</p>
+        </section>
+
+        <section class="panel">
+          <span class="label">Break plan</span>
+          <select id="breakPlan">
+            <option value="pomodoro">Pomodoro: 25m focus → 5m stand/stretch</option>
+            <option value="fiftyten">50/10: 50m focus → 10m stand/stretch</option>
+            <option value="custom">Custom (choose your own)</option>
+          </select>
+
+          <div class="grid-2" style="margin-top:10px">
+            <label class="check">
+              <input type="checkbox" id="enableHeadRest" checked />
+              <span>Enable head/eye-rest reminders</span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="enableStand" checked />
+              <span>Enable stand & stretch reminders</span>
+            </label>
+          </div>
+
+          <div id="customBreaks" class="grid-3 hidden" style="margin-top:10px">
+            <div>
+              <label class="label" for="microEvery">Head/eye-rest every (min)</label>
+              <input id="microEvery" type="number" min="10" max="120" value="20" />
+            </div>
+            <div>
+              <label class="label" for="standEvery">Stand & stretch every (min)</label>
+              <input id="standEvery" type="number" min="30" max="240" value="60" />
+            </div>
+            <div>
+              <label class="label" for="standLen">Stand break length (min)</label>
+              <input id="standLen" type="number" min="1" max="15" value="3" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:10px">
+            <label class="check">
+              <input type="checkbox" id="enableBreakQuotes" checked />
+              <span>Show motivational quotes during breaks (when paused)</span>
+            </label>
+            <span class="note">Quotes appear only while paused.</span>
+          </div>
+
+          <p class="note">Breaks are nudges—no social scrolling.</p>
+        </section>
+
+        <section class="panel">
+          <span class="label">Sound alerts</span>
+          <div class="grid-2" style="align-items:end">
+            <label class="check">
+              <input id="soundEnabled" type="checkbox" checked />
+              <span>Enable sound alerts (breaks, posture, head rest, time’s up)</span>
+            </label>
+            <div>
+              <label class="label" for="soundVolume">Volume</label>
+              <input id="soundVolume" type="range" min="0" max="1" step="0.01" value="0.7" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top:10px">
+            <button type="button" class="btn-ghost btn" id="testSounds">Test sounds</button>
+          </div>
+          <p class="note">Sounds use Web Audio. On iOS/Android they play after a tap.</p>
+        </section>
+
+        <section class="panel">
+          <span class="label">Emergency contacts (at least one)</span>
+          <div class="grid-3">
+            <input id="tel1" type="tel" placeholder="e.g. 911 or +1 416 555 1234" autocomplete="tel" />
+            <input id="tel2" type="tel" placeholder="e.g. Mom +1 ..." autocomplete="tel" />
+            <input id="tel3" type="tel" placeholder="e.g. Doctor +1 ..." autocomplete="tel" />
+          </div>
+          <p class="note">Only emergency calls are allowed during lockdown—no PIN needed.</p>
+        </section>
+
+        <div class="actions">
+          <button id="startBtn" class="btn" type="submit">⏱️ Start session</button>
+        </div>
+
+        <p id="errors" class="errors hidden" role="alert"></p>
+      </form>
     </div>
-
-    <form id="setupForm" class="stack">
-      <!-- Duration -->
-      <section class="panel">
-        <label class="label">Focus duration</label>
-        <div id="presetRow" class="row">
-          <button type="button" class="chip" data-min="25">25m</button>
-          <button type="button" class="chip" data-min="50">50m</button>
-          <button type="button" class="chip" data-min="90">90m</button>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label class="label">Custom minutes</label>
-            <input id="customMinutes" type="number" min="1" max="600" placeholder="e.g. 45" />
-          </div>
-          <div>
-            <label class="label">Required passcode (min 4 digits)</label>
-            <input id="pin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Set a PIN" />
-          </div>
-        </div>
-      </section>
-
-      <!-- Description -->
-      <section class="panel">
-        <label class="label">Session description (optional)</label>
-        <textarea id="sessionDesc" rows="3" placeholder="e.g. ‘Deep work on resume builder, API wiring, and tests.’"></textarea>
-        <p class="note">This will appear on the Timer page and be saved in History.</p>
-      </section>
-
-      <!-- Breaks / Reminders -->
-      <section class="panel">
-        <label class="label">Break plan</label>
-        <select id="breakPlan">
-          <option value="pomodoro">Pomodoro: 25m focus → 5m stand/stretch</option>
-          <option value="fiftyten">50/10: 50m focus → 10m stand/stretch</option>
-          <option value="custom">Custom (choose your own)</option>
-        </select>
-
-        <div class="grid-2" style="margin-top:10px">
-          <label class="check">
-            <input type="checkbox" id="enableHeadRest" checked />
-            <span>Enable head/eye-rest reminders</span>
-          </label>
-          <label class="check">
-            <input type="checkbox" id="enableStand" checked />
-            <span>Enable stand & stretch reminders</span>
-          </label>
-        </div>
-
-        <div id="customBreaks" class="grid-3 hidden" style="margin-top:10px">
-          <div>
-            <label class="label">Head/eye-rest every (min)</label>
-            <input id="microEvery" type="number" min="10" max="120" value="20" />
-          </div>
-          <div>
-            <label class="label">Stand & stretch every (min)</label>
-            <input id="standEvery" type="number" min="30" max="240" value="60" />
-          </div>
-          <div>
-            <label class="label">Stand break length (min)</label>
-            <input id="standLen" type="number" min="1" max="15" value="3" />
-          </div>
-        </div>
-        <p class="note">Breaks are nudges—no social scrolling.</p>
-
-        <!-- UPDATED: Quotes control -->
-        <div class="grid-2" style="margin-top:10px">
-          <label class="check">
-            <input type="checkbox" id="enableBreakQuotes" checked />
-            <span>Show motivational quotes during breaks (when paused)</span>
-          </label>
-          <span class="note">Quotes appear only while paused.</span>
-        </div>
-      </section>
-
-      <!-- Sound Alerts -->
-      <section class="panel">
-        <label class="label">Sound alerts</label>
-        <div class="grid-2" style="align-items:end">
-          <label class="check">
-            <input id="soundEnabled" type="checkbox" checked />
-            <span>Enable sound alerts (breaks, posture, head rest, time’s up)</span>
-          </label>
-          <div>
-            <label class="label">Volume</label>
-            <input id="soundVolume" type="range" min="0" max="1" step="0.01" value="0.7" />
-          </div>
-        </div>
-        <div class="actions" style="margin-top:10px">
-          <button type="button" class="btn-ghost btn" id="testSounds">Test sounds</button>
-        </div>
-        <p class="note">Sounds use Web Audio (no files). On iOS/Android they play after a tap.</p>
-      </section>
-
-      <!-- Emergency -->
-      <section class="panel">
-        <label class="label">Emergency contacts (at least one)</label>
-        <div class="grid-3">
-          <input id="tel1" type="tel" placeholder="e.g. 911 or +1 416 555 1234" />
-          <input id="tel2" type="tel" placeholder="e.g. Mom +1 ..." />
-          <input id="tel3" type="tel" placeholder="e.g. Doctor +1 ..." />
-        </div>
-        <p class="note">Only emergency calls are allowed during lockdown—no PIN needed.</p>
-      </section>
-
-      <div class="actions">
-        <button id="startBtn" class="btn" type="submit">⏱️ Start session</button>
-      </div>
-      <p id="errors" class="errors hidden"></p>
-    </form>
-  </div>
+  </main>
 
   <!-- Alerts for test button -->
   <script src="alerts.js"></script>

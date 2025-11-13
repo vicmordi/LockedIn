@@ -1,36 +1,73 @@
-/* Reusable padlock component: drop into any page */
-.padlock{
-  --size: 64px;
-  position:relative; width:var(--size); height:calc(var(--size) * 1.2);
-  filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));
-  animation:floaty 3.2s ease-in-out infinite;
+:root{
+  --pad-accent:#b388ff;
+  --pad-shadow:rgba(0,0,0,.4);
 }
-@keyframes floaty{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-6px)} }
-
+.padlock{
+  --size:72px;
+  position:relative;
+  width:var(--size);
+  height:calc(var(--size)*1.3);
+  filter:drop-shadow(0 18px 38px var(--pad-shadow));
+  animation:floaty 4.2s ease-in-out infinite;
+}
+.padlock::after{
+  content:"";
+  position:absolute;
+  inset:auto -12% -20% -12%;
+  height:16px;
+  border-radius:999px;
+  background:radial-gradient(circle,rgba(0,0,0,.45),transparent 75%);
+  opacity:.75;
+  pointer-events:none;
+}
+@keyframes floaty{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-8px);}
+}
 .padlock .shackle{
-  position:absolute; left:50%; transform:translateX(-50%);
-  top:-8px; width:calc(var(--size) * .58); height:calc(var(--size) * .58);
-  border:6px solid #cbd5ff; border-bottom:none; border-radius:18px 18px 0 0;
-  background:linear-gradient(180deg,#ffffff,#cbd5ff);
-  box-shadow:inset 0 0 10px rgba(0,0,0,.15);
-  animation:lock-snap 2.2s ease-in-out 1.4s forwards;
+  position:absolute;
+  left:50%;
+  transform:translate(-50%,-6px);
+  top:0;
+  width:calc(var(--size)*.54);
+  height:calc(var(--size)*.64);
+  border:6px solid rgba(203,213,255,.9);
+  border-bottom:none;
+  border-radius:20px 20px 0 0;
+  background:linear-gradient(180deg,#fafaff,#cdd5ff);
+  box-shadow:inset 0 0 12px rgba(0,0,0,.18);
+  animation:lock-snap 2.4s ease-in-out 1.2s forwards;
 }
 @keyframes lock-snap{
-  0%{ transform:translateX(-50%) translateY(0) }
-  60%{ transform:translateX(-50%) translateY(2px) }
-  100%{ transform:translateX(-50%) translateY(0) }
+  0%{transform:translate(-50%,-6px) translateY(0);}
+  60%{transform:translate(-50%,-6px) translateY(2px);}
+  100%{transform:translate(-50%,-6px) translateY(0);}
 }
 .padlock .body{
-  position:absolute; inset:auto 0 0 0; height:calc(var(--size) * .9);
-  margin:auto; width:var(--size); background:linear-gradient(180deg,#b388ff,#7e57c2);
-  border-radius:12px; border:1px solid rgba(255,255,255,.18);
+  position:absolute;
+  inset:auto 0 0 0;
+  height:calc(var(--size)*.92);
+  margin:0 auto;
+  width:var(--size);
+  border-radius:18px;
+  background:linear-gradient(180deg,#b388ff,#7e57c2);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:inset 0 0 12px rgba(255,255,255,.12);
 }
 .padlock .keyhole{
-  position:absolute; left:50%; top:38%; transform:translateX(-50%);
-  width:14px; height:14px; background:#1a1b2a; border-radius:999px;
-  box-shadow:0 18px 0 #1a1b2a; /* stem */
+  position:absolute;
+  left:50%;
+  top:40%;
+  transform:translateX(-50%);
+  width:16px;
+  height:16px;
+  background:#12172c;
+  border-radius:999px;
+  box-shadow:0 20px 0 #12172c;
 }
-
-/* Tiny lock row (timer header variant) */
-.lock-row{ display:flex; align-items:center; gap:8px }
-.lock-row .txt{ color:#9aa2b2; font-size:12px }
+.lock-row{display:flex;align-items:center;gap:8px;}
+.lock-row .txt{color:#9aa2b2;font-size:12px;}
+@media (prefers-reduced-motion:reduce){
+  .padlock{animation:none;}
+  .padlock .shackle{animation:none;}
+}

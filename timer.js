@@ -1,28 +1,35 @@
-/* === timer.js (paused = quotes replace clock; expand-on-click; 3-min rotation) === */
+/* === timer.js — modernized focus flow with animated progress & break quotes === */
 
 let cfg = null;
+let quotesEnabled = true;
 
-// State
-let remainingMs = 0, durationMs = 0;
-let endAt = null, timerId = null, paused = true;
+let remainingMs = 0;
+let durationMs = 0;
+let endAt = null;
+let timerId = null;
+let paused = true;
 let phase = 'focus';
-let nextMicroAt = null, nextStandAt = null;
+let nextMicroAt = null;
+let nextStandAt = null;
 let sessionConfigured = false;
 let wakeLock = null;
 let pendingAction = null;
 let timeupHandled = false;
 
-// Quotes state
 let quoteTimer = null;
-let quotePanel = null;     // container replacing the clock while paused
+let quotePanel = null;
 let quoteTextEl = null;
 let quoteExpanded = false;
 let quoteIdx = 0;
 
-// DOM
 const timerEl = document.getElementById('timer');
+const minimal = document.getElementById('minimal');
+const minimalTimer = document.getElementById('minimalTimer');
+const clockShell = document.getElementById('clockShell');
 const phaseLabel = document.getElementById('phaseLabel');
-const bar = document.getElementById('bar');
+const phasePill = document.getElementById('phasePill');
+const progressBar = document.getElementById('bar');
+const progressTrack = document.querySelector('.progress');
 const pauseResumeBtn = document.getElementById('pauseResume');
 const endEarlyBtn = document.getElementById('endEarly');
 const resetBtn = document.getElementById('reset');
@@ -32,8 +39,6 @@ const historyLink = document.getElementById('historyLink');
 const backToSetup = document.getElementById('backToSetup');
 const historyDiv = document.getElementById('history');
 const sessionInfoDiv = document.getElementById('sessionInfo');
-const minimal = document.getElementById('minimal');
-const minimalTimer = document.getElementById('minimalTimer');
 const sheet = document.getElementById('sheet');
 const emergencyLinks = document.getElementById('emergencyLinks');
 const pinInput = document.getElementById('pinInput');
@@ -41,218 +46,269 @@ const submitPin = document.getElementById('submitPin');
 const cancelSheet = document.getElementById('cancelSheet');
 const wakelockStatus = document.getElementById('wakelockStatus');
 const toasts = document.getElementById('toasts');
-const toggleSound = document.getElementById('toggleSound'); // optional
+const toggleSound = document.getElementById('toggleSound');
+const keypad = document.getElementById('keypad');
 
-// Optional lock animation in header
 const headerLock = document.getElementById('headerLock');
-function setLockState(state){ if(!headerLock) return; headerLock.className = `lock-anim ${state}`; }
+const headerKeyhole = headerLock ? headerLock.querySelector('.keyhole') : null;
 
-// ===== Utilities
-function fmt(ms){
-  const s=Math.max(0,Math.floor(ms/1000));
-  const h=String(Math.floor(s/3600)).padStart(2,'0');
-  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
-  const ss=String(s%60).padStart(2,'0');
-  return `${h}:${m}:${ss}`;
+function setLockState(state){
+  if (!headerLock) return;
+  headerLock.className = `lock-anim ${state}`;
 }
-function phoneOk(v){ return (v||'').replace(/\s+/g,'').length>=3; }
+
+function fmt(ms){
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, '0');
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const s = String(total % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+function phoneOk(v){ return (v || '').replace(/\s+/g, '').length >= 3; }
 async function enableWakeLock(){
   try{
-    if('wakeLock' in navigator){
+    if ('wakeLock' in navigator){
       wakeLock = await navigator.wakeLock.request('screen');
-      wakelockStatus.textContent='Screen lock: on';
-      wakeLock.addEventListener('release',()=> wakelockStatus.textContent='Screen lock: off');
-      document.addEventListener('visibilitychange', async ()=>{
-        if(document.visibilityState==='visible' && !wakeLock){
-          try{ wakeLock = await navigator.wakeLock.request('screen'); wakelockStatus.textContent='Screen lock: on'; }catch(_){}
+      wakelockStatus.textContent = 'Screen lock: on';
+      wakeLock.addEventListener('release', () => wakelockStatus.textContent = 'Screen lock: off');
+      document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible' && !wakeLock){
+          try{
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakelockStatus.textContent = 'Screen lock: on';
+          }catch(_){}
         }
       });
-    } else wakelockStatus.textContent='Screen lock: unavailable';
-  }catch(_){ wakelockStatus.textContent='Screen lock: off'; }
+    }else{
+      wakelockStatus.textContent = 'Screen lock: unavailable';
+    }
+  }catch(_){
+    wakelockStatus.textContent = 'Screen lock: off';
+  }
 }
-function disableWakeLock(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; wakelockStatus.textContent='Screen lock: off'; } }
-function hookUnload(){ window.onbeforeunload=()=> 'Focus session in progress.'; }
-function unhookUnload(){ window.onbeforeunload=null; }
-function showMinimal(on){ minimal.setAttribute('aria-hidden', on?'false':'true'); }
-async function enterFullscreen(){ try{ if(!document.fullscreenElement){ await document.documentElement.requestFullscreen({navigationUI:'hide'}); } }catch{} }
-async function exitFullscreen(){ try{ if(document.fullscreenElement){ await document.exitFullscreen(); } }catch{} }
-async function enterFocusMode(){ showMinimal(true); await enterFullscreen(); }
-async function exitFocusMode(){ showMinimal(false); await exitFullscreen(); }
+function disableWakeLock(){
+  if (wakeLock){
+    wakeLock.release().catch(()=>{});
+    wakeLock = null;
+    wakelockStatus.textContent = 'Screen lock: off';
+  }
+}
+function hookUnload(){ window.onbeforeunload = () => 'Focus session in progress.'; }
+function unhookUnload(){ window.onbeforeunload = null; }
+function showMinimal(on){
+  if (!minimal) return;
+  minimal.setAttribute('aria-hidden', on ? 'false' : 'true');
+}
+async function enterFullscreen(){
+  try{
+    if (!document.fullscreenElement){
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }
+  }catch(_){}
+}
+async function exitFullscreen(){
+  try{
+    if (document.fullscreenElement){
+      await document.exitFullscreen();
+    }
+  }catch(_){}
+}
+async function enterFocusMode(){
+  if (paused) return;
+  showMinimal(true);
+  await enterFullscreen();
+}
+async function exitFocusMode(){
+  showMinimal(false);
+  await exitFullscreen();
+}
+
+function phaseName(){
+  switch (phase){
+    case 'micro': return 'Micro break';
+    case 'stand': return 'Stand / stretch';
+    default: return 'Focus';
+  }
+}
+
 function updateUI(){
-  timerEl.textContent = fmt(remainingMs);
-  minimalTimer.textContent = fmt(remainingMs);
-  const p = (durationMs>0) ? 100 - Math.round((remainingMs/durationMs)*100) : 0;
-  bar.style.width = `${Math.min(100,Math.max(0,p))}%`;
-  pauseResumeBtn.textContent = paused ? 'Resume' : 'Pause';
-  phaseLabel.textContent = `Phase: ${phase==='focus'?'Focus':(phase==='micro'?'Micro break':'Stand/stretch')}`;
+  const formatted = fmt(remainingMs);
+  if (timerEl) timerEl.textContent = formatted;
+  if (minimalTimer) minimalTimer.textContent = formatted;
+
+  const progress = durationMs > 0 ? Math.min(1, Math.max(0, 1 - (remainingMs / durationMs))) : 0;
+  if (clockShell){
+    clockShell.style.setProperty('--progress', progress);
+    clockShell.classList.toggle('paused', paused);
+  }
+  if (progressBar) progressBar.style.width = `${Math.round(progress * 100)}%`;
+  if (progressTrack) progressTrack.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+
+  const phaseText = phaseName();
+  if (phaseLabel) phaseLabel.textContent = `Phase: ${phaseText}`;
+  if (phasePill) phasePill.textContent = phaseText;
+  if (headerKeyhole){
+    headerKeyhole.style.fill = phase === 'focus' ? '#b388ff' : '#7e57c2';
+  }
+
+  if (pauseResumeBtn){
+    pauseResumeBtn.textContent = paused ? 'Resume' : 'Pause';
+  }
 }
 
-// ===== History
-function loadHistory(){ try{return JSON.parse(localStorage.getItem('li_history')||'[]');}catch(_){return [];} }
-function saveHistory(list){ localStorage.setItem('li_history', JSON.stringify(list.slice(-200))); }
-function addHistory(item){ const list=loadHistory(); list.push(item); saveHistory(list); renderHistory(); }
+function loadHistory(){
+  try{
+    return JSON.parse(localStorage.getItem('li_history') || '[]');
+  }catch(_){
+    return [];
+  }
+}
+function saveHistory(list){
+  localStorage.setItem('li_history', JSON.stringify(list.slice(-200)));
+}
+function addHistory(item){
+  const list = loadHistory();
+  list.push(item);
+  saveHistory(list);
+  renderHistory();
+}
 function renderHistory(){
-  const list=loadHistory().slice().reverse();
-  historyDiv.innerHTML = list.map(i=>{
-    const desc = i.description ? `<div class="muted" style="margin-top:4px">${i.description}</div>` : '';
-    return `<div class="hrow" style="flex-direction:column; align-items:flex-start">
-      <span>${new Date(i.date).toLocaleString()} — ${i.minutes}m — ${i.label||'Focus'} <span class="${i.outcome==='Completed'?'ok':'bad'}" style="margin-left:6px">${i.outcome}</span></span>
-      ${desc}
-    </div>`;
-  }).join('') || `<div class="note">No sessions yet.</div>`;
+  const list = loadHistory().slice().reverse();
+  historyDiv.innerHTML = list.map(entry => {
+    const date = new Date(entry.date).toLocaleString();
+    const outcomeClass = entry.outcome === 'Completed' ? 'ok' : 'bad';
+    const note = entry.description ? `<p class="history-item__note">${escapeHtml(entry.description)}</p>` : '';
+    return `<article class="history-item">
+      <div class="history-item__meta">
+        <span>${date}</span>
+        <span class="history-tag ${outcomeClass}">${entry.outcome}</span>
+      </div>
+      <div class="history-item__details">${entry.minutes} min • ${escapeHtml(entry.label || 'Focus')}</div>
+      ${note}
+    </article>`;
+  }).join('') || '<div class="history-empty">No sessions yet. Complete one to start your streak.</div>';
 }
 
-// ===== Break-only quotes =====
 const BREAK_QUOTES = [
-  "Lock in now, cash out later.",
-  "Discipline today is freedom tomorrow.",
-  "Tiny wins compound. Stay with it.",
-  "You’re building a future no one can take.",
-  "Focus is a superpower—use it.",
-  "This chapter becomes your testimony.",
-  "Dreams don’t work unless you do."
+  'Lock in now, cash out later.',
+  'Discipline today becomes freedom tomorrow.',
+  'Tiny wins compound. Stay with it.',
+  'You are building a future no one can take.',
+  'Focus is the edge most people dismiss—use it.',
+  'This chapter becomes your testimony.',
+  'Momentum loves consistency. Keep your promise.',
+  'Protect the work that matters most right now.'
 ];
 
-// Build once, placed exactly where the clock sits
 function ensureQuotePanel(){
-  if (quotePanel) return;
-
-  // Hide the big clock and insert quote panel right after it
-  timerEl.style.display = 'none';
+  if (quotePanel || !timerEl) return;
+  timerEl.classList.add('is-hidden');
+  if (clockShell){
+    clockShell.classList.add('quotes-visible');
+  }
 
   quotePanel = document.createElement('div');
   quotePanel.id = 'pausedQuote';
-  quotePanel.style.cssText = `
-    margin: 0 auto 8px;
-    max-width: 820px;
-    width: 100%;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(32,36,52,.92);
-    color: #E6E6EA;
-    box-shadow: 0 18px 48px rgba(0,0,0,.35);
-    padding: 14px 16px;
-    cursor: pointer;
-    user-select: none;
-    transition: padding .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
-  `;
+  quotePanel.className = 'quote-card';
 
-  // “PAUSED — tap to expand” header
-  const cap = document.createElement('div');
-  cap.style.cssText = `
-    display:flex; align-items:center; gap:8px; 
-    font: 700 12px/1 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-    color:#AEB2C4; letter-spacing:.3px; text-transform:uppercase;
-    margin-bottom:8px;
-  `;
-  cap.innerHTML = `<span class="pill" style="border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); padding:4px 8px; border-radius:999px">Paused</span><span>Tap to expand</span>`;
-  quotePanel.appendChild(cap);
+  const header = document.createElement('div');
+  header.className = 'quote-card__header';
 
-  // The quote text (collapsible)
+  const chip = document.createElement('span');
+  chip.className = 'quote-chip';
+  chip.textContent = 'Paused';
+  header.appendChild(chip);
+
+  const headerText = document.createElement('span');
+  headerText.textContent = 'Tap to expand';
+  header.appendChild(headerText);
+
+  quotePanel.appendChild(header);
+
   quoteTextEl = document.createElement('div');
-  quoteTextEl.id = 'pausedQuoteText';
-  quoteTextEl.style.cssText = `
-    font: 800 18px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-    overflow: hidden;
-  `;
+  quoteTextEl.className = 'quote-card__text';
   quotePanel.appendChild(quoteTextEl);
 
-  // Footer hint
   const hint = document.createElement('div');
-  hint.style.cssText = `
-    margin-top:10px; color:#9BA3B5; 
-    font: 600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Inter,sans-serif;
-  `;
-  hint.textContent = 'Tap anywhere to toggle size. Use Resume to continue.';
+  hint.className = 'quote-card__hint';
+  hint.textContent = 'Tap inside to expand. Resume when you are ready.';
   quotePanel.appendChild(hint);
 
-  // Toggle expand/collapse on click
-  quotePanel.addEventListener('click', (e)=>{
-    // If user actually pressed a control button, ignore toggle
-    const isControl = e.target.closest('.controls') || e.target.closest('.sheet-inner');
+  quotePanel.addEventListener('click', (event) => {
+    const isControl = event.target.closest('.controls') || event.target.closest('.sheet-inner');
     if (isControl) return;
     quoteExpanded = !quoteExpanded;
     applyQuoteLayout();
   });
 
-  // Insert right where the clock is (same parent)
   const container = timerEl.parentNode;
   container.insertBefore(quotePanel, timerEl.nextSibling);
 
-  // When expanded, clicking anywhere outside collapses (menus remain visible)
-  document.addEventListener('click', onOutsideClick, true);
+  document.addEventListener('click', onOutsideQuoteClick, true);
 }
-
-function onOutsideClick(e){
+function onOutsideQuoteClick(event){
   if (!quotePanel || !quoteExpanded) return;
-  const insidePanel = e.target.closest('#pausedQuote');
-  const isControl = e.target.closest('.controls') || e.target.closest('.sheet-inner');
-  if (!insidePanel && !isControl) {
+  const insidePanel = event.target.closest('#pausedQuote');
+  const isControl = event.target.closest('.controls') || event.target.closest('.sheet-inner');
+  if (!insidePanel && !isControl){
     quoteExpanded = false;
     applyQuoteLayout();
   }
 }
-
 function removeQuotePanel(){
-  document.removeEventListener('click', onOutsideClick, true);
-  if (quoteTimer) { clearInterval(quoteTimer); quoteTimer = null; }
-  if (quotePanel && quotePanel.parentNode) quotePanel.parentNode.removeChild(quotePanel);
-  quotePanel = null;
+  document.removeEventListener('click', onOutsideQuoteClick, true);
+  if (quoteTimer){
+    clearInterval(quoteTimer);
+    quoteTimer = null;
+  }
+  if (quotePanel){
+    quotePanel.remove();
+    quotePanel = null;
+  }
   quoteTextEl = null;
   quoteExpanded = false;
-  // Show clock again
-  timerEl.style.display = '';
-}
-
-function setQuote(text){ if (quoteTextEl) quoteTextEl.textContent = text; }
-function nextQuote(){
-  const q = BREAK_QUOTES[quoteIdx % BREAK_QUOTES.length];
-  quoteIdx++;
-  setQuote(q);
-}
-function applyQuoteLayout(){
-  if (!quotePanel || !quoteTextEl) return;
-  if (quoteExpanded) {
-    quotePanel.style.padding = '20px 22px';
-    quotePanel.style.background = 'rgba(40,44,62,.96)';
-    quotePanel.style.boxShadow = '0 22px 64px rgba(0,0,0,.45)';
-    quoteTextEl.style.webkitLineClamp = '10';
-    quoteTextEl.style.fontSize = 'clamp(18px,3.2vw,28px)';
-    quoteTextEl.style.lineHeight = '1.28';
-    quotePanel.style.transform = 'translateY(-2px)';
-  } else {
-    quotePanel.style.padding = '14px 16px';
-    quotePanel.style.background = 'rgba(32,36,52,.92)';
-    quotePanel.style.boxShadow = '0 18px 48px rgba(0,0,0,.35)';
-    quoteTextEl.style.webkitLineClamp = '3';
-    quoteTextEl.style.fontSize = '18px';
-    quoteTextEl.style.lineHeight = '1.35';
-    quotePanel.style.transform = 'translateY(0)';
+  if (timerEl){
+    timerEl.classList.remove('is-hidden');
+  }
+  if (clockShell){
+    clockShell.classList.remove('quotes-visible');
   }
 }
+function nextQuote(){
+  if (!BREAK_QUOTES.length) return;
+  const quote = BREAK_QUOTES[quoteIdx % BREAK_QUOTES.length];
+  quoteIdx++;
+  if (quoteTextEl){
+    quoteTextEl.textContent = quote;
+  }
+}
+function applyQuoteLayout(){
+  if (!quotePanel) return;
+  quotePanel.classList.toggle('expanded', quoteExpanded);
+}
 function showQuotesDuringPause(){
+  if (!quotesEnabled) return;
   ensureQuotePanel();
   nextQuote();
   applyQuoteLayout();
-  if (!quoteTimer) {
-    quoteTimer = setInterval(()=>{ if (paused) { nextQuote(); applyQuoteLayout(); } }, 180000); // 3 min
+  if (!quoteTimer){
+    quoteTimer = setInterval(() => {
+      if (paused) nextQuote();
+    }, 180000);
   }
 }
 
-// ===== Break scheduling
 function scheduleBreaks(){
   const now = Date.now();
-  nextMicroAt = cfg.microEveryMin ? now + cfg.microEveryMin*60*1000 : null;
-  nextStandAt = cfg.standEveryMin ? now + cfg.standEveryMin*60*1000 : null;
+  nextMicroAt = cfg.microEveryMin ? now + cfg.microEveryMin * 60 * 1000 : null;
+  nextStandAt = cfg.standEveryMin ? now + cfg.standEveryMin * 60 * 1000 : null;
 }
 
-/* ===== Alerts integration ===== */
 function initAlerts(){
   if (!window.LockedInAlerts) return;
-  try {
+  try{
     LockedInAlerts.loadSettings();
-    if (sessionStorage.getItem('lockedin.sound.expect') === 'true') {
+    if (sessionStorage.getItem('lockedin.sound.expect') === 'true'){
       LockedInAlerts.init();
     }
     LockedInAlerts.registerControls({
@@ -262,33 +318,35 @@ function initAlerts(){
       endSession: () => {}
     });
     syncSoundPill();
-  } catch(e) {}
+  }catch(_){}
 }
-
-// If audio is still locked on this page, nudge once to tap
 function ensureAudioReady(){
   if (!window.LockedInAlerts) return;
   try{
     const ctx = LockedInAlerts.ctx;
     const needsTap = !ctx || (ctx && ctx.state !== 'running');
     const existing = document.getElementById('soundNudge');
-    if (!needsTap) { if (existing) existing.remove(); return; }
+    if (!needsTap){
+      if (existing) existing.remove();
+      return;
+    }
     if (existing) return;
 
     const n = document.createElement('div');
     n.id = 'soundNudge';
     n.style.cssText = `
-      position: fixed; left:50%; transform:translateX(-50%);
-      bottom: 16px; z-index: 9999; background: rgba(34,34,42,.92);
-      color:#fff; border:1px solid rgba(255,255,255,.15);
-      border-radius: 12px; padding: 10px 14px; font: 600 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      box-shadow: 0 12px 24px rgba(0,0,0,.35);
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 18px; z-index: 1600;
+      background: rgba(18,22,40,.92);
+      color: #fff; border: 1px solid rgba(255,255,255,.18);
+      border-radius: 14px; padding: 12px 16px; font: 600 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      box-shadow: 0 18px 48px rgba(0,0,0,.45);
     `;
     n.textContent = 'Tap anywhere to enable sound alerts';
     document.body.appendChild(n);
 
     const unlock = () => {
-      try { LockedInAlerts.init(); } catch(_){}
+      try{ LockedInAlerts.init(); }catch(_){}
       const ok = LockedInAlerts.ctx && LockedInAlerts.ctx.state === 'running';
       if (ok && n.parentNode) n.parentNode.removeChild(n);
       window.removeEventListener('click', unlock, true);
@@ -299,16 +357,14 @@ function ensureAudioReady(){
     window.addEventListener('touchstart', unlock, true);
   }catch(_){}
 }
-
-// Optional: sound toggle pill
 function syncSoundPill(){
   if (!toggleSound || !window.LockedInAlerts) return;
   const enabled = localStorage.getItem('lockedin.sound.enabled') !== 'false';
   toggleSound.textContent = `Sound: ${enabled ? 'On' : 'Off'}`;
 }
-if (toggleSound) {
-  toggleSound.addEventListener('click', (e)=>{
-    e.preventDefault();
+if (toggleSound){
+  toggleSound.addEventListener('click', (event) => {
+    event.preventDefault();
     if (!window.LockedInAlerts) return;
     const enabled = localStorage.getItem('lockedin.sound.enabled') !== 'false';
     localStorage.setItem('lockedin.sound.enabled', String(!enabled));
@@ -317,268 +373,396 @@ if (toggleSound) {
   });
 }
 
-/* ===== Trigger break prompts when due ===== */
 function maybeTriggerBreak(now){
-  if(paused) return;
+  if (paused) return;
 
-  if(nextMicroAt && now>=nextMicroAt && phase==='focus'){
-    if (window.LockedInAlerts) { LockedInAlerts.trigger('headrest'); }
-    else { pauseSession(); beginGuidedBreak('headrest'); }
+  if (nextMicroAt && now >= nextMicroAt && phase === 'focus'){
+    if (window.LockedInAlerts){
+      LockedInAlerts.trigger('headrest');
+    }else{
+      pauseSession();
+      beginGuidedBreak('headrest');
+    }
     nextMicroAt += cfg.microEveryMin * 60 * 1000;
     return;
   }
 
-  if(nextStandAt && now>=nextStandAt && phase==='focus'){
-    if (window.LockedInAlerts) { LockedInAlerts.trigger('stand'); }
-    else { pauseSession(); beginGuidedBreak('stand'); }
+  if (nextStandAt && now >= nextStandAt && phase === 'focus'){
+    if (window.LockedInAlerts){
+      LockedInAlerts.trigger('stand');
+    }else{
+      pauseSession();
+      beginGuidedBreak('stand');
+    }
     nextStandAt += cfg.standEveryMin * 60 * 1000;
-    return;
   }
 }
 
-/* ===== Guided break flows ===== */
 function beginGuidedBreak(type){
   setLockState('paused');
-  // Replace clock with quotes
-  showQuotesDuringPause();
+  showMinimal(false);
 
-  if (type === 'headrest') { phase = 'micro'; updateUI(); return; }
-  if (type === 'stand')   { phase = 'stand'; updateUI(); return; }
-  if (type === 'break')   { phase = 'micro'; updateUI(); }
+  if (paused){
+    if (quotesEnabled){
+      showQuotesDuringPause();
+    }else if (timerEl){
+      timerEl.classList.add('timer-paused');
+    }
+  }
+
+  if (type === 'headrest'){
+    phase = 'micro';
+  }else if (type === 'stand'){
+    phase = 'stand';
+  }else if (type === 'break'){
+    phase = 'micro';
+  }
+  updateUI();
 }
 
-/* ===== Completion prompt ===== */
 function showCompletionPrompt(){
   const overlay = document.createElement('div');
   overlay.style.cssText = `
-    position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
-    background:rgba(18,18,22,.55); backdrop-filter:blur(6px);
+    position:fixed; inset:0; z-index:1700;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(8,10,20,.72); backdrop-filter:blur(12px);
   `;
   const card = document.createElement('div');
   card.style.cssText = `
-    width:min(520px,92vw); border-radius:16px; padding:18px;
-    background:rgba(40,40,46,.94); color:#E6E6EA; border:1px solid rgba(255,255,255,.08);
-    box-shadow:0 20px 60px rgba(0,0,0,.4); font: 600 15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    width: min(520px, 92vw);
+    border-radius: 24px;
+    padding: 24px;
+    background: rgba(18,22,40,.94);
+    color: #f5f6ff;
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 28px 90px rgba(0,0,0,.55);
+    font: 600 16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   `;
   const h = document.createElement('h2');
   h.textContent = 'Great job — session complete!';
-  h.style.cssText = 'margin:0 0 6px 0; font-weight:800; letter-spacing:.2px;';
+  h.style.cssText = 'margin:0 0 8px 0; font-weight:800;';
   const p = document.createElement('p');
-  p.textContent = 'You did well staying LockedIn. Ready for the next one?';
-  p.style.cssText = 'margin:0 0 14px 0; color:#9A9AA5; font-weight:500;';
+  p.textContent = 'You stayed LockedIn. Keep the momentum going.';
+  p.style.cssText = 'margin:0 0 20px 0; color:#a6acce;';
   const row = document.createElement('div');
-  row.style.cssText = 'display:flex; gap:10px; flex-wrap:wrap;';
-  const b1 = document.createElement('button');
-  b1.textContent = '✅ Back to Setup';
-  b1.style.cssText = btnCss();
-  const b2 = document.createElement('button');
-  b2.textContent = '📜 View History';
-  b2.style.cssText = btnCss(true);
+  row.style.cssText = 'display:flex; gap:12px; flex-wrap:wrap;';
 
-  function btnCss(ghost=false){
-    return `
-      flex:1; display:inline-flex; justify-content:center; align-items:center; gap:8px;
-      padding:12px 14px; border-radius:14px;
-      border:1px solid ${ghost?'rgba(255,255,255,.10)':'rgba(179,136,255,.18)'};
-      background:${ghost?'#2C2C32':'linear-gradient(180deg,#B388FF,#7E57C2)'}; 
-      color:#fff; font-weight:800; cursor:pointer;
-    `;
-  }
+  const setupBtn = document.createElement('button');
+  setupBtn.textContent = '✅ Back to Setup';
+  setupBtn.className = 'btn';
+  setupBtn.addEventListener('click', () => {
+    overlay.remove();
+    window.location.href = 'setup.html';
+  });
 
-  b1.addEventListener('click', ()=> { try{ overlay.remove(); }catch{} window.location.href='setup.html'; });
-  b2.addEventListener('click', ()=> { try{ overlay.remove(); }catch{} window.location.href='history.html'; });
+  const historyBtn = document.createElement('button');
+  historyBtn.textContent = '📜 View History';
+  historyBtn.className = 'btn btn-ghost';
+  historyBtn.addEventListener('click', () => {
+    overlay.remove();
+    window.location.href = 'history.html';
+  });
 
-  row.appendChild(b1); row.appendChild(b2);
-  card.appendChild(h); card.appendChild(p); card.appendChild(row);
+  row.appendChild(setupBtn);
+  row.appendChild(historyBtn);
+  card.appendChild(h);
+  card.appendChild(p);
+  card.appendChild(row);
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-
-  setTimeout(()=> b1.focus(), 0);
+  setTimeout(() => setupBtn.focus(), 0);
 }
 
-/* ===== End + navigate helper ===== */
 function endAndNavigate(url, outcomeLabel){
-  const elapsed = Math.round(((durationMs||0)-(Math.max(0, endAt - Date.now())||0))/60000);
+  const elapsed = Math.round(((durationMs || 0) - (Math.max(0, endAt - Date.now()) || 0)) / 60000);
   addHistory({
-    date:new Date().toISOString(),
+    date: new Date().toISOString(),
     minutes: elapsed,
     outcome: outcomeLabel || 'Ended via PIN',
-    label: phase==='focus'?'Focus':'Break',
-    description: (cfg.description||'')
+    label: phaseName(),
+    description: cfg.description || ''
   });
-  clearInterval(timerId); timerId=null;
-  unhookUnload(); disableWakeLock();
+  clearInterval(timerId);
+  timerId = null;
+  unhookUnload();
+  disableWakeLock();
   removeQuotePanel();
-  showMinimal(false); sheet.setAttribute('aria-hidden','true');
+  if (timerEl) timerEl.classList.remove('timer-paused');
+  showMinimal(false);
+  sheet.setAttribute('aria-hidden', 'true');
   window.location.href = url;
 }
 
-/* ===== Core timer loop ===== */
 function tick(){
   const now = Date.now();
-  remainingMs = Math.max(0, (endAt??now) - now);
+  remainingMs = Math.max(0, (endAt ?? now) - now);
   maybeTriggerBreak(now);
   updateUI();
 
-  if(remainingMs <= 0 && !timeupHandled){
+  if (remainingMs <= 0 && !timeupHandled){
     timeupHandled = true;
-    clearInterval(timerId); timerId=null;
-    showMinimal(false); sheet.setAttribute('aria-hidden','true');
-    unhookUnload(); disableWakeLock();
+    clearInterval(timerId);
+    timerId = null;
+    showMinimal(false);
+    sheet.setAttribute('aria-hidden', 'true');
+    unhookUnload();
+    disableWakeLock();
     setLockState('paused');
     removeQuotePanel();
+    if (timerEl) timerEl.classList.remove('timer-paused');
 
-    const mins = Math.round((durationMs||0)/60000)||0;
-    addHistory({date:new Date().toISOString(), minutes:mins, outcome:'Completed', label:'Focus', description: cfg.description||''});
+    const mins = Math.round((durationMs || 0) / 60000) || 0;
+    addHistory({
+      date: new Date().toISOString(),
+      minutes: mins,
+      outcome: 'Completed',
+      label: 'Focus',
+      description: cfg.description || ''
+    });
 
-    if (window.LockedInAlerts) { try { LockedInAlerts.play('timeup'); } catch(_){ } }
+    if (window.LockedInAlerts){
+      try{ LockedInAlerts.play('timeup'); }catch(_){}
+    }
     showCompletionPrompt();
   }
 }
 
-/* ===== Session control ===== */
 function startSession(){
   remainingMs = durationMs;
   endAt = Date.now() + remainingMs;
-  paused = false; phase='focus'; sessionConfigured = true;
-  scheduleBreaks(); enableWakeLock(); hookUnload();
-  setLockState('intro'); setTimeout(()=> setLockState('run'), 900);
+  paused = false;
+  phase = 'focus';
+  sessionConfigured = true;
+  scheduleBreaks();
+  enableWakeLock();
+  hookUnload();
+  setLockState('intro');
+  setTimeout(() => setLockState('run'), 900);
 
-  enterFocusMode();
-  clearInterval(timerId); timerId = setInterval(tick, 200);
+  clearInterval(timerId);
+  timerId = setInterval(tick, 200);
   updateUI();
+  enterFocusMode();
 
   initAlerts();
   ensureAudioReady();
 }
 function pauseSession(){
-  if(paused) return;
-  paused = true; clearInterval(timerId); timerId = null;
+  if (paused) return;
+  paused = true;
+  clearInterval(timerId);
+  timerId = null;
   remainingMs = Math.max(0, endAt - Date.now());
   setLockState('paused');
-  showMinimal(false);             // show menus
-  showQuotesDuringPause();        // replace clock with quotes
+  showMinimal(false);
+  if (quotesEnabled){
+    showQuotesDuringPause();
+  }else if (timerEl){
+    timerEl.classList.add('timer-paused');
+    if (clockShell){
+      clockShell.classList.remove('quotes-visible');
+    }
+  }
   updateUI();
 }
 function resumeSession(){
-  if(!sessionConfigured){ alert('Start a valid session from setup first.'); return; }
-  if(!paused) return;
-  paused = false; endAt = Date.now() + remainingMs;
+  if (!sessionConfigured){
+    alert('Start a valid session from setup first.');
+    return;
+  }
+  if (!paused) return;
+  paused = false;
+  phase = 'focus';
+  endAt = Date.now() + remainingMs;
   setLockState('run');
-  removeQuotePanel();             // restore clock
-  enterFocusMode();               // re-enter focus overlay if desired
-  clearInterval(timerId); timerId = setInterval(tick, 200);
+  removeQuotePanel();
+  if (timerEl) timerEl.classList.remove('timer-paused');
+  showMinimal(false);
+  clearInterval(timerId);
+  timerId = setInterval(tick, 200);
   updateUI();
 }
 function resetSession(){
-  clearInterval(timerId); timerId=null; paused=true; endAt=null; remainingMs=0; sessionConfigured=false; phase='focus';
+  clearInterval(timerId);
+  timerId = null;
+  paused = true;
+  endAt = null;
+  remainingMs = 0;
+  sessionConfigured = false;
+  phase = 'focus';
   setLockState('paused');
   removeQuotePanel();
-  showMinimal(false); sheet.setAttribute('aria-hidden','true'); unhookUnload(); disableWakeLock();
+  if (timerEl) timerEl.classList.remove('timer-paused');
+  showMinimal(false);
+  sheet.setAttribute('aria-hidden', 'true');
+  unhookUnload();
+  disableWakeLock();
   window.location.href = 'setup.html';
 }
 
-/* ===== Sheet (PIN + emergency) ===== */
 function setEmergencyLinks(){
-  emergencyLinks.innerHTML='';
-  (cfg.emergency||[]).filter(phoneOk).forEach(t=>{
-    const a=document.createElement('a'); a.href=`tel:${t.replace(/\s+/g,'')}`; a.textContent='🚨 Emergency Call'; emergencyLinks.appendChild(a);
+  emergencyLinks.innerHTML = '';
+  (cfg.emergency || []).filter(phoneOk).forEach(num => {
+    const link = document.createElement('a');
+    link.href = `tel:${num.replace(/\s+/g, '')}`;
+    link.textContent = '🚨 Emergency Call';
+    emergencyLinks.appendChild(link);
   });
-  if(!emergencyLinks.children.length){
-    const a=document.createElement('a'); a.href='tel:911'; a.textContent='🚨 Emergency Call (911)'; emergencyLinks.appendChild(a);
+  if (!emergencyLinks.children.length){
+    const fallback = document.createElement('a');
+    fallback.href = 'tel:911';
+    fallback.textContent = '🚨 Emergency Call (911)';
+    emergencyLinks.appendChild(fallback);
   }
 }
 function openSheet(action){
-  pendingAction=action||null; setEmergencyLinks();
-  sheet.setAttribute('aria-hidden','true'); sheet.offsetHeight; sheet.setAttribute('aria-hidden','false');
-  pinInput.value=''; pinInput.focus();
+  pendingAction = action || null;
+  setEmergencyLinks();
+  sheet.setAttribute('aria-hidden', 'true');
+  sheet.offsetHeight;
+  sheet.setAttribute('aria-hidden', 'false');
+  pinInput.value = '';
+  pinInput.focus();
 }
-function closeSheet(){ sheet.setAttribute('aria-hidden','true'); pendingAction=null; }
-['1','2','3','4','5','6','7','8','9','←','0','⟲'].forEach(k=>{
-  const b=document.createElement('button'); b.className='kbtn'; b.textContent=k;
-  b.addEventListener('click',()=>{ if(k==='←'){ pinInput.value=pinInput.value.slice(0,-1); } else if(k==='⟲'){ pinInput.value=''; } else if(/\d/.test(k)){ pinInput.value+=k; } });
-  document.getElementById('keypad').appendChild(b);
-});
-submitPin.addEventListener('click', ()=>{
-  if((pinInput.value||'') === (cfg.pin||'')){
-    if(pendingAction==='end'){
-      endAndNavigate('setup.html', 'Ended via PIN');
-    } else if(pendingAction==='pause'){
-      pauseSession(); closeSheet();
-    } else if(pendingAction==='reset'){
-      resetSession();
-    } else if(pendingAction==='nav_history'){
-      endAndNavigate('history.html', 'Ended to view history');
-    } else if(pendingAction==='nav_setup'){
-      endAndNavigate('setup.html', 'Ended to go to setup');
-    } else {
-      closeSheet();
-    }
-  } else {
-    alert('Incorrect PIN.');
+function closeSheet(){
+  sheet.setAttribute('aria-hidden', 'true');
+  pendingAction = null;
+}
+
+if (keypad){
+  ['1','2','3','4','5','6','7','8','9','←','0','⟲'].forEach(key => {
+    const button = document.createElement('button');
+    button.className = 'kbtn';
+    button.type = 'button';
+    button.textContent = key;
+    button.addEventListener('click', () => {
+      if (key === '←'){
+        pinInput.value = pinInput.value.slice(0, -1);
+      }else if (key === '⟲'){
+        pinInput.value = '';
+      }else if (/^\d$/.test(key)){
+        pinInput.value += key;
+      }
+    });
+    keypad.appendChild(button);
+  });
+}
+
+pauseResumeBtn.addEventListener('click', () => {
+  if (!sessionConfigured){
+    alert('Start a valid session from setup first.');
+    return;
+  }
+  if (paused){
+    resumeSession();
+  }else{
+    openSheet('pause');
   }
 });
-cancelSheet.addEventListener('click', closeSheet);
-
-/* ===== Controls ===== */
-pauseResumeBtn.addEventListener('click', ()=>{
-  if(!sessionConfigured){ alert('Start a valid session from setup first.'); return; }
-  if(paused) resumeSession(); else openSheet('pause');
-});
-endEarlyBtn.addEventListener('click', ()=>{
-  if(!sessionConfigured){ alert('No active session to end.'); return; }
+endEarlyBtn.addEventListener('click', () => {
+  if (!sessionConfigured){
+    alert('No active session to end.');
+    return;
+  }
   openSheet('end');
 });
-resetBtn.addEventListener('click', ()=> openSheet('reset'));
-emergencyBtn.addEventListener('click', ()=> openSheet(null));
+resetBtn.addEventListener('click', () => openSheet('reset'));
+emergencyBtn.addEventListener('click', () => openSheet(null));
 
-// Tap big clock overlay to exit Focus Mode (show menus)
-minimal.addEventListener('click', ()=>{
-  if (paused) return;
-  exitFocusMode();
-});
-// Tap big clock text to re-enter Focus Mode (only when running)
-timerEl.addEventListener('click', ()=>{
+focusModeBtn.addEventListener('click', () => {
   if (!sessionConfigured || paused) return;
   enterFocusMode();
 });
-// Manual button to re-enter Focus Mode
-focusModeBtn.addEventListener('click', ()=>{
-  if (!sessionConfigured || paused) return;
-  enterFocusMode();
-});
+if (timerEl){
+  timerEl.addEventListener('click', () => {
+    if (!sessionConfigured || paused) return;
+    enterFocusMode();
+  });
+  timerEl.addEventListener('keydown', (event) => {
+    if (!sessionConfigured || paused) return;
+    if (event.key === 'Enter' || event.key === ' '){
+      event.preventDefault();
+      enterFocusMode();
+    }
+  });
+}
 
-// Header links
-historyLink.addEventListener('click', (e)=>{
-  e.preventDefault();
-  if(!sessionConfigured){
+if (minimal){
+  minimal.addEventListener('click', () => {
+    if (paused) return;
+    exitFocusMode();
+  });
+}
+
+historyLink.addEventListener('click', (event) => {
+  event.preventDefault();
+  if (!sessionConfigured){
     window.location.href = 'history.html';
     return;
   }
   openSheet('nav_history');
 });
-backToSetup.addEventListener('click', (e)=>{
-  e.preventDefault();
-  if(!sessionConfigured){
+backToSetup.addEventListener('click', (event) => {
+  event.preventDefault();
+  if (!sessionConfigured){
     window.location.href = 'setup.html';
     return;
   }
   openSheet('nav_setup');
 });
 
-// Escape closes overlay
-document.addEventListener('fullscreenchange', ()=>{
-  if(!document.fullscreenElement){ showMinimal(false); }
+submitPin.addEventListener('click', () => {
+  if ((pinInput.value || '') === (cfg.pin || '')){
+    switch (pendingAction){
+      case 'end':
+        endAndNavigate('setup.html', 'Ended via PIN');
+        break;
+      case 'pause':
+        pauseSession();
+        closeSheet();
+        break;
+      case 'reset':
+        resetSession();
+        break;
+      case 'nav_history':
+        endAndNavigate('history.html', 'Ended to view history');
+        break;
+      case 'nav_setup':
+        endAndNavigate('setup.html', 'Ended to go to setup');
+        break;
+      default:
+        closeSheet();
+    }
+  }else{
+    alert('Incorrect PIN.');
+  }
+});
+cancelSheet.addEventListener('click', closeSheet);
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement){
+    showMinimal(false);
+  }
 });
 
-/* ===== Boot ===== */
 (function boot(){
-  try{ cfg = JSON.parse(sessionStorage.getItem('lockedInConfig')||'null'); }catch{ cfg=null; }
-  if(!cfg){ window.location.href = 'setup.html'; return; }
+  try{
+    cfg = JSON.parse(sessionStorage.getItem('lockedInConfig') || 'null');
+  }catch(_){
+    cfg = null;
+  }
+  if (!cfg){
+    window.location.href = 'setup.html';
+    return;
+  }
 
-  durationMs = cfg.durationMs||0;
-  if(!durationMs || !cfg.pin || !(cfg.emergency||[]).length){ window.location.href = 'setup.html'; return; }
+  durationMs = cfg.durationMs || 0;
+  if (!durationMs || !cfg.pin || !(cfg.emergency || []).length){
+    window.location.href = 'setup.html';
+    return;
+  }
 
+  quotesEnabled = cfg.enableBreakQuotes !== false;
   renderSessionInfo();
   startSession();
   pauseResumeBtn.disabled = false;
@@ -586,15 +770,54 @@ document.addEventListener('fullscreenchange', ()=>{
   renderHistory();
 })();
 
-// Session info
 function renderSessionInfo(){
+  if (!sessionInfoDiv) return;
   const lines = [];
-  if (cfg.description) lines.push(`<div><strong>Description:</strong> ${escapeHtml(cfg.description)}</div>`);
-  lines.push(`<div><strong>Duration:</strong> ${Math.round((cfg.durationMs||0)/60000)} min</div>`);
-  const brk = [];
-  if (cfg.microEveryMin) brk.push(`Head/eye-rest every ${cfg.microEveryMin}m`);
-  if (cfg.standEveryMin) brk.push(`Stand every ${cfg.standEveryMin}m (${cfg.standLenMin}m)`);
-  if (brk.length) lines.push(`<div><strong>Breaks:</strong> ${brk.join(' • ')}</div>`);
-  sessionInfoDiv.innerHTML = lines.join('') || '<div class="muted">No extra info.</div>';
+
+  if (cfg.description){
+    lines.push(`
+      <div class="info-line info-line--stacked">
+        <span class="info-label">Description</span>
+        <p class="info-value">${escapeHtml(cfg.description)}</p>
+      </div>
+    `);
+  }
+
+  lines.push(`
+    <div class="info-line">
+      <span class="info-label">Duration</span>
+      <span class="info-value">${Math.round((cfg.durationMs || 0) / 60000)} min</span>
+    </div>
+  `);
+
+  const breakBits = [];
+  if (cfg.microEveryMin) breakBits.push(`Head/eye rest every ${cfg.microEveryMin}m`);
+  if (cfg.standEveryMin) breakBits.push(`Stand every ${cfg.standEveryMin}m • ${cfg.standLenMin}m`);
+  if (breakBits.length){
+    lines.push(`
+      <div class="info-line info-line--stacked">
+        <span class="info-label">Break plan</span>
+        <p class="info-value">${breakBits.join('<br>')}</p>
+      </div>
+    `);
+  }
+
+  lines.push(`
+    <div class="info-line">
+      <span class="info-label">Quotes</span>
+      <span class="info-value">${quotesEnabled ? 'On during breaks' : 'Off'}</span>
+    </div>
+  `);
+
+  sessionInfoDiv.innerHTML = lines.join('');
 }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
