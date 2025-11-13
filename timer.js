@@ -676,6 +676,125 @@ function setEmergencyLinks(){
     emergencyLinks.appendChild(fallback);
   }
 }
+
+/* NEW: emergency overlay without PIN */
+function showEmergencyOverlay(){
+  if (!cfg) return;
+
+  // remove any existing emergency overlay
+  const existing = document.getElementById('emergencyOverlay');
+  if (existing && existing.parentNode){
+    existing.parentNode.removeChild(existing);
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'emergencyOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 1800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8,10,20,0.78);
+    backdrop-filter: blur(14px);
+  `;
+
+  const card = document.createElement('div');
+  card.style.cssText = `
+    width: min(420px, 92vw);
+    border-radius: 22px;
+    padding: 20px 22px;
+    background: rgba(18,22,40,0.96);
+    color: #f9f9ff;
+    border: 1px solid rgba(248,113,113,0.4);
+    box-shadow: 0 26px 80px rgba(0,0,0,0.6);
+    font: 600 15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  `;
+
+  const title = document.createElement('h2');
+  title.textContent = 'Emergency contacts';
+  title.style.cssText = 'margin:0 0 6px 0; font-size:1.1rem;';
+
+  const subtitle = document.createElement('p');
+  subtitle.textContent = 'Tap a number to call.';
+  subtitle.style.cssText = 'margin:0 0 14px 0; color:#fecaca; font-size:0.9rem;';
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-bottom:16px;';
+
+  const nums = (cfg.emergency || []).filter(phoneOk);
+  nums.forEach(num => {
+    const a = document.createElement('a');
+    a.href = `tel:${num.replace(/\s+/g, '')}`;
+    a.style.cssText = `
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(248,113,113,0.4);
+      background: rgba(127,29,29,0.4);
+      color: #fee2e2;
+      text-decoration: none;
+      font-size: 0.95rem;
+    `;
+    const icon = document.createElement('span');
+    icon.textContent = '🚨';
+    const label = document.createElement('span');
+    label.textContent = num;
+    a.appendChild(icon);
+    a.appendChild(label);
+    list.appendChild(a);
+  });
+
+  if (!list.children.length){
+    const fallback = document.createElement('a');
+    fallback.href = 'tel:911';
+    fallback.textContent = '🚨 Emergency Call (911)';
+    fallback.style.cssText = `
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(248,113,113,0.4);
+      background: rgba(127,29,29,0.4);
+      color: #fee2e2;
+      text-decoration: none;
+      font-size: 0.95rem;
+    `;
+    list.appendChild(fallback);
+  }
+
+  const footer = document.createElement('div');
+  footer.style.cssText = 'display:flex; justify-content:flex-end;';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.className = 'btn btn-ghost';
+  closeBtn.style.cssText = 'font-size:0.9rem; padding-inline:14px;';
+  closeBtn.addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  footer.appendChild(closeBtn);
+
+  card.appendChild(title);
+  card.appendChild(subtitle);
+  card.appendChild(list);
+  card.appendChild(footer);
+  overlay.appendChild(card);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay){
+      overlay.remove();
+    }
+  });
+
+  document.body.appendChild(overlay);
+}
+
 function openSheet(action){
   pendingAction = action || null;
   setEmergencyLinks();
@@ -712,7 +831,11 @@ endEarlyBtn.addEventListener('click', () => {
   openSheet('end');
 });
 resetBtn.addEventListener('click', () => openSheet('reset'));
-emergencyBtn.addEventListener('click', () => openSheet(null));
+
+// EMERGENCY: show contacts overlay (no PIN)
+emergencyBtn.addEventListener('click', () => {
+  showEmergencyOverlay();
+});
 
 focusModeBtn.addEventListener('click', () => {
   if (!sessionConfigured || paused) return;
@@ -864,7 +987,7 @@ function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
-    '>': '&gt;',
+    '>': '&lt;',
     '"': '&quot;',
     "'": '&#39;'
   }[char]));
