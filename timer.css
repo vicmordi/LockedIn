@@ -95,6 +95,8 @@ h1{
   transition:background .2s ease,color .2s ease,transform .18s ease;
 }
 .pill:hover{background:rgba(255,255,255,.12);color:#fff;transform:translateY(-1px);}
+
+/* Lock animation */
 .lock-anim{
   position:relative;
   display:flex;
@@ -118,6 +120,7 @@ h1{
 .lock-anim.run .shackle{transform:rotate(0deg);}
 .lock-anim.paused .shackle{animation:openHold .8s ease-out forwards;}
 .lock-anim.paused .body{animation:none;}
+
 .grid{
   display:grid;
   gap:clamp(18px,3vw,24px);
@@ -126,6 +129,7 @@ h1{
 @media (min-width:840px){
   .grid{grid-template-columns:1.25fr .75fr;}
 }
+
 .panel{
   background:var(--panel);
   border-radius:24px;
@@ -137,6 +141,8 @@ h1{
   display:grid;
   gap:20px;
 }
+
+/* Clock / timer */
 .clock-shell{
   position:relative;
   width:min(420px,72vw);
@@ -181,6 +187,7 @@ h1{
   opacity:0;
   pointer-events:none;
 }
+
 .timer{
   position:absolute;
   inset:0;
@@ -206,6 +213,7 @@ h1{
 .timer-paused{
   animation:pausedGlow 3s ease-in-out infinite;
 }
+
 .phase-meta{
   display:flex;
   align-items:center;
@@ -230,6 +238,7 @@ h1{
   text-align:center;
   margin:0;
 }
+
 .progress{
   position:relative;
   height:12px;
@@ -246,6 +255,7 @@ h1{
   box-shadow:0 0 18px rgba(179,136,255,.45) inset;
   transition:width .25s ease;
 }
+
 .controls{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
@@ -277,6 +287,7 @@ button{
   color:var(--text);
 }
 .btn[disabled]{opacity:.5;cursor:not-allowed;}
+
 .panel-secondary{
   display:grid;
   gap:18px;
@@ -299,6 +310,7 @@ button{
   font-size:.8rem;
   color:rgba(198,204,233,.8);
 }
+
 .session-info{
   display:grid;
   gap:14px;
@@ -327,6 +339,7 @@ button{
   margin:0;
 }
 .info-line--stacked .info-value{margin-top:6px;line-height:1.5;}
+
 .history{
   display:grid;
   gap:12px;
@@ -386,6 +399,8 @@ button{
   gap:12px;
 }
 .panel-secondary .actions .btn{flex:1;}
+
+/* Quote card (used when timer is paused) */
 .quote-card{
   width:100%;
   border-radius:20px;
@@ -398,7 +413,8 @@ button{
   transition:transform .18s ease,box-shadow .25s ease,background .25s ease;
   position:relative;
 }
-.clock-shell .quote-card{
+
+/* Position quote card inside the clock shell */
 .clock-shell .quote-card{
   position:absolute;
   inset:auto 50% 14%;
@@ -424,6 +440,7 @@ button{
 .clock-shell.quotes-visible .quote-card.expanded .quote-card__hint{
   text-align:left;
 }
+
 .quote-card.expanded{
   transform:translateY(-2px);
   background:rgba(30,34,58,.96);
@@ -462,6 +479,8 @@ button{
   font-size:.82rem;
   color:var(--muted);
 }
+
+/* PIN / emergency sheet */
 .sheet{
   position:fixed;
   inset:0;
@@ -470,7 +489,10 @@ button{
   display:none;
   z-index:1400;
 }
-.sheet[aria-hidden="false"]{display:block;animation:fadeIn .18s ease-out;}
+.sheet[aria-hidden="false"]{
+  display:block;
+  animation:fadeIn .18s ease-out;
+}
 .sheet-inner{
   position:absolute;
   inset:0;
@@ -482,7 +504,10 @@ button{
   padding:32px clamp(16px,6vw,40px);
   color:var(--text);
 }
-.h2{margin:0;font-size:1.4rem;}
+.h2{
+  margin:0;
+  font-size:1.4rem;
+}
 .emergency{
   display:flex;
   flex-wrap:wrap;
@@ -510,24 +535,20 @@ button{
   color:var(--text);
   font-size:1.1rem;
 }
-.keypad{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+
+/* New: layout for Confirm / Cancel buttons in the sheet */
+.sheet-actions{
+  display:flex;
+  flex-wrap:wrap;
   gap:12px;
+  justify-content:center;
   width:min(380px,90vw);
 }
-.kbtn{
-  padding:14px 0;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(20,24,40,.85);
-  color:var(--text);
-  font-weight:700;
-  font-size:1.1rem;
-  cursor:pointer;
-  transition:transform .15s ease,filter .22s ease;
+.sheet-actions .btn{
+  flex:1;
 }
-.kbtn:active{transform:translateY(1px);}
+
+/* Minimal full-screen focus view */
 .minimal{
   position:fixed;
   inset:0;
@@ -548,6 +569,8 @@ button{
   color:#f8faff;
   text-shadow:0 28px 80px rgba(0,0,0,.65);
 }
+
+/* Toasts */
 .toasts{
   position:fixed;
   left:50%;
@@ -567,22 +590,55 @@ button{
   color:var(--text);
   box-shadow:0 18px 60px rgba(0,0,0,.5);
 }
-.toast small{display:block;color:var(--muted);margin-top:6px;}
+.toast small{
+  display:block;
+  color:var(--muted);
+  margin-top:6px;
+}
+
+/* Animations */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pausedGlow{
   0%,100%{text-shadow:0 0 0 rgba(179,136,255,.4);}
   50%{text-shadow:0 0 28px rgba(179,136,255,.6);}
 }
-@keyframes shackleClose{0%{transform:rotate(-24deg) translateY(-2px);opacity:.95;}45%{transform:rotate(-6deg);}100%{transform:rotate(0);}}
-@keyframes bodyPop{0%{transform:translateY(6px) scale(.92);opacity:0;}60%{transform:translateY(0) scale(1.02);opacity:1;}100%{transform:translateY(0) scale(1);}}
-@keyframes keyPulse{0%{transform:scale(.7);opacity:.6;}50%{transform:scale(1.08);opacity:1;}100%{transform:scale(1);}}
-@keyframes glowPulse{0%{opacity:.0;transform:scale(.9);}50%{opacity:.7;transform:scale(1.06);}100%{opacity:.45;transform:scale(1);}}
-@keyframes runPulse{0%{transform:scale(1);}50%{transform:scale(1.03);}100%{transform:scale(1);}}
-@keyframes openHold{0%{transform:rotate(0);}100%{transform:rotate(-10deg);}}
+@keyframes shackleClose{
+  0%{transform:rotate(-24deg) translateY(-2px);opacity:.95;}
+  45%{transform:rotate(-6deg);}
+  100%{transform:rotate(0);}
+}
+@keyframes bodyPop{
+  0%{transform:translateY(6px) scale(.92);opacity:0;}
+  60%{transform:translateY(0) scale(1.02);opacity:1;}
+  100%{transform:translateY(0) scale(1);}
+}
+@keyframes keyPulse{
+  0%{transform:scale(.7);opacity:.6;}
+  50%{transform:scale(1.08);opacity:1;}
+  100%{transform:scale(1);}
+}
+@keyframes glowPulse{
+  0%{opacity:.0;transform:scale(.9);}
+  50%{opacity:.7;transform:scale(1.06);}
+  100%{opacity:.45;transform:scale(1);}
+}
+@keyframes runPulse{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.03);}
+  100%{transform:scale(1);}
+}
+@keyframes openHold{
+  0%{transform:rotate(0);}
+  100%{transform:rotate(-10deg);}
+}
+
+/* Focus outline */
 :focus-visible{
   outline:2px solid var(--ring);
   outline-offset:3px;
 }
+
+/* Mobile & motion settings */
 @supports (height:100svh){
   body{min-height:100svh;}
 }
@@ -623,4 +679,3 @@ button{
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;}
 }
-

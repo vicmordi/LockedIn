@@ -47,7 +47,6 @@ const cancelSheet = document.getElementById('cancelSheet');
 const wakelockStatus = document.getElementById('wakelockStatus');
 const toasts = document.getElementById('toasts');
 const toggleSound = document.getElementById('toggleSound');
-const keypad = document.getElementById('keypad');
 
 const headerLock = document.getElementById('headerLock');
 const headerKeyhole = headerLock ? headerLock.querySelector('.keyhole') : null;
@@ -65,6 +64,7 @@ function fmt(ms){
   return `${h}:${m}:${s}`;
 }
 function phoneOk(v){ return (v || '').replace(/\s+/g, '').length >= 3; }
+
 async function enableWakeLock(){
   try{
     if ('wakeLock' in navigator){
@@ -93,12 +93,15 @@ function disableWakeLock(){
     wakelockStatus.textContent = 'Screen lock: off';
   }
 }
+
 function hookUnload(){ window.onbeforeunload = () => 'Focus session in progress.'; }
 function unhookUnload(){ window.onbeforeunload = null; }
+
 function showMinimal(on){
   if (!minimal) return;
   minimal.setAttribute('aria-hidden', on ? 'false' : 'true');
 }
+
 async function enterFullscreen(){
   try{
     if (!document.fullscreenElement){
@@ -113,6 +116,7 @@ async function exitFullscreen(){
     }
   }catch(_){}
 }
+
 async function enterFocusMode(){
   if (paused) return;
   showMinimal(true);
@@ -202,6 +206,7 @@ const BREAK_QUOTES = [
 
 function ensureQuotePanel(){
   if (quotePanel || !timerEl) return;
+
   timerEl.classList.add('is-hidden');
   if (clockShell){
     clockShell.classList.add('quotes-visible');
@@ -246,6 +251,7 @@ function ensureQuotePanel(){
 
   document.addEventListener('click', onOutsideQuoteClick, true);
 }
+
 function onOutsideQuoteClick(event){
   if (!quotePanel || !quoteExpanded) return;
   const insidePanel = event.target.closest('#pausedQuote');
@@ -255,6 +261,7 @@ function onOutsideQuoteClick(event){
     applyQuoteLayout();
   }
 }
+
 function removeQuotePanel(){
   document.removeEventListener('click', onOutsideQuoteClick, true);
   if (quoteTimer){
@@ -274,6 +281,7 @@ function removeQuotePanel(){
     clockShell.classList.remove('quotes-visible');
   }
 }
+
 function nextQuote(){
   if (!BREAK_QUOTES.length) return;
   const quote = BREAK_QUOTES[quoteIdx % BREAK_QUOTES.length];
@@ -282,10 +290,12 @@ function nextQuote(){
     quoteTextEl.textContent = quote;
   }
 }
+
 function applyQuoteLayout(){
   if (!quotePanel) return;
   quotePanel.classList.toggle('expanded', quoteExpanded);
 }
+
 function showQuotesDuringPause(){
   if (!quotesEnabled) return;
   ensureQuotePanel();
@@ -294,7 +304,7 @@ function showQuotesDuringPause(){
   if (!quoteTimer){
     quoteTimer = setInterval(() => {
       if (paused) nextQuote();
-    }, 180000);
+    }, 180000); // 3 min
   }
 }
 
@@ -304,6 +314,7 @@ function scheduleBreaks(){
   nextStandAt = cfg.standEveryMin ? now + cfg.standEveryMin * 60 * 1000 : null;
 }
 
+/* === Sound / Alerts === */
 function initAlerts(){
   if (!window.LockedInAlerts) return;
   try{
@@ -373,6 +384,7 @@ if (toggleSound){
   });
 }
 
+/* === Break scheduling === */
 function maybeTriggerBreak(now){
   if (paused) return;
 
@@ -420,6 +432,7 @@ function beginGuidedBreak(type){
   updateUI();
 }
 
+/* === Session completion === */
 function showCompletionPrompt(){
   const overlay = document.createElement('div');
   overlay.style.cssText = `
@@ -527,6 +540,7 @@ function tick(){
   }
 }
 
+/* === Session control === */
 function startSession(){
   remainingMs = durationMs;
   endAt = Date.now() + remainingMs;
@@ -600,6 +614,7 @@ function resetSession(){
   window.location.href = 'setup.html';
 }
 
+/* === PIN sheet / emergency === */
 function setEmergencyLinks(){
   emergencyLinks.innerHTML = '';
   (cfg.emergency || []).filter(phoneOk).forEach(num => {
@@ -618,7 +633,9 @@ function setEmergencyLinks(){
 function openSheet(action){
   pendingAction = action || null;
   setEmergencyLinks();
-  sheet.setAttribute('aria-hidden', 'true');
+  sheet.setAttribute('aria-hidden', 'true'); // reset
+  // small reflow to ensure animation
+  // eslint-disable-next-line no-unused-expressions
   sheet.offsetHeight;
   sheet.setAttribute('aria-hidden', 'false');
   pinInput.value = '';
@@ -629,25 +646,7 @@ function closeSheet(){
   pendingAction = null;
 }
 
-if (keypad){
-  ['1','2','3','4','5','6','7','8','9','←','0','⟲'].forEach(key => {
-    const button = document.createElement('button');
-    button.className = 'kbtn';
-    button.type = 'button';
-    button.textContent = key;
-    button.addEventListener('click', () => {
-      if (key === '←'){
-        pinInput.value = pinInput.value.slice(0, -1);
-      }else if (key === '⟲'){
-        pinInput.value = '';
-      }else if (/^\d$/.test(key)){
-        pinInput.value += key;
-      }
-    });
-    keypad.appendChild(button);
-  });
-}
-
+/* === Button wiring === */
 pauseResumeBtn.addEventListener('click', () => {
   if (!sessionConfigured){
     alert('Start a valid session from setup first.');
@@ -745,6 +744,7 @@ document.addEventListener('fullscreenchange', () => {
   }
 });
 
+/* === Boot === */
 (function boot(){
   try{
     cfg = JSON.parse(sessionStorage.getItem('lockedInConfig') || 'null');
@@ -762,7 +762,9 @@ document.addEventListener('fullscreenchange', () => {
     return;
   }
 
-  quotesEnabled = cfg.enableBreakQuotes !== false;
+  // IMPORTANT: match what setup.js stores: enableQuotes
+  quotesEnabled = cfg.enableQuotes !== false;
+
   renderSessionInfo();
   startSession();
   pauseResumeBtn.disabled = false;
@@ -811,6 +813,7 @@ function renderSessionInfo(){
 
   sessionInfoDiv.innerHTML = lines.join('');
 }
+
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
@@ -820,4 +823,3 @@ function escapeHtml(str){
     "'": '&#39;'
   }[char]));
 }
-

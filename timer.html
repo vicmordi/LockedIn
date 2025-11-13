@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Locked In — Timer</title>
+  <title>LockedIn — Timer</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="stylesheet" href="timer.css" />
 </head>
@@ -13,7 +13,7 @@
       <div class="brand">
         <span class="dot"></span>
         <div>
-          <h1>Locked In — Timer</h1>
+          <h1>LockedIn — Timer</h1>
           <p class="muted">Tap the big clock to toggle Focus Mode.</p>
         </div>
 
@@ -45,7 +45,15 @@
     <section id="timerPage" class="grid">
       <section class="panel panel-primary">
         <div class="clock-shell" id="clockShell" aria-hidden="true">
-          <div class="timer" id="timer" role="button" tabindex="0" aria-label="Tap to toggle Focus Mode">00:00:00</div>
+          <div
+            class="timer"
+            id="timer"
+            role="button"
+            tabindex="0"
+            aria-label="Tap to toggle Focus Mode"
+          >
+            00:00:00
+          </div>
         </div>
 
         <div class="phase-meta">
@@ -53,7 +61,13 @@
           <div class="sub" id="phaseLabel">Phase: Focus</div>
         </div>
 
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div
+          class="progress"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
           <div id="bar" class="bar"></div>
         </div>
 
@@ -86,16 +100,31 @@
     </section>
   </div>
 
-  <!-- PIN/Emergency sheet -->
+  <!-- PIN/Emergency sheet (overlay, no custom keypad) -->
   <div id="sheet" class="sheet" aria-hidden="true">
     <div class="sheet-inner" onclick="event.stopPropagation()">
       <span class="pill">Focus session</span>
-      <h2 class="h2">Enter PIN to confirm</h2>
+      <h2 class="h2">PIN required</h2>
+      <p class="note">Enter your LockedIn PIN to confirm this action.</p>
+
+      <!-- Emergency shortcuts (populated from JS) -->
       <div class="emergency" id="emergencyLinks"></div>
-      <input id="pinInput" type="password" inputmode="numeric" placeholder="Enter your PIN" class="pinbox" />
-      <div class="keypad" id="keypad"></div>
-      <button id="submitPin" class="btn">Confirm</button>
-      <button id="cancelSheet" class="btn btn-ghost">Cancel</button>
+
+      <!-- Use device keyboard, no on-screen keypad -->
+      <input
+        id="pinInput"
+        type="password"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        placeholder="Enter your PIN"
+        class="pinbox"
+        autocomplete="one-time-code"
+      />
+
+      <div class="sheet-actions">
+        <button id="submitPin" class="btn">Confirm</button>
+        <button id="cancelSheet" class="btn btn-ghost">Cancel</button>
+      </div>
     </div>
   </div>
 
