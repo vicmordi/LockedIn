@@ -6,67 +6,103 @@
   <title>LockedIn — Setup</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="stylesheet" href="setup.css" />
-  <!-- NEW: shared padlock animation styles -->
-  <link rel="stylesheet" href="lock.css" />
 </head>
 <body>
-  <main class="layout">
-    <div class="app card">
-      <header class="header">
-        <div class="brand">
-          <span class="dot"></span>
-          <div>
-            <h1>LockedIn — Setup</h1>
-            <p class="muted">Dial in your session, then slide into focus.</p>
-          </div>
-        </div>
-        <nav class="nav">
-          <a class="pill" href="history.html">History</a>
-        </nav>
-      </header>
-
-      <div class="lock-banner">
-        <div id="setupLock" class="padlock" aria-hidden="true">
-          <div class="shackle"></div>
-          <div class="body">
-            <div class="keyhole"></div>
-          </div>
-        </div>
-        <div class="muted">Secure focus mode</div>
+  <main class="setup-container">
+    <div class="setup-content">
+      <!-- Clock icon and branding -->
+      <div class="branding">
+        <div class="clock-icon" aria-hidden="true">🕐</div>
+        <h1 class="app-title">LockedIn</h1>
+        <p class="tagline">Lock in. Clock out.</p>
       </div>
 
+      <!-- Duration selection -->
+      <div class="duration-section">
+        <label class="section-label">SELECT DURATION</label>
+        <div class="duration-grid" id="durationButtons">
+          <button type="button" class="duration-card" data-min="30">
+            <span class="duration-value">30</span>
+            <span class="duration-unit">min</span>
+          </button>
+          <button type="button" class="duration-card active" data-min="60">
+            <span class="duration-value">1</span>
+            <span class="duration-unit">hour</span>
+          </button>
+          <button type="button" class="duration-card" data-min="120">
+            <span class="duration-value">2</span>
+            <span class="duration-unit">hours</span>
+          </button>
+          <button type="button" class="duration-card" data-min="240">
+            <span class="duration-value">4</span>
+            <span class="duration-unit">hours</span>
+          </button>
+          <button type="button" class="duration-card" data-min="480">
+            <span class="duration-value">8</span>
+            <span class="duration-unit">hours</span>
+          </button>
+        </div>
+        
+        <!-- Custom time input -->
+        <div class="custom-time-section">
+          <label class="section-label" for="customTime">OR ENTER CUSTOM TIME</label>
+          <div class="custom-time-input">
+            <input 
+              id="customTime" 
+              type="text" 
+              inputmode="numeric" 
+              placeholder="e.g., 90" 
+              pattern="[0-9]*"
+            />
+            <span class="custom-time-label">minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-buttons">
+        <button id="startBtn" class="btn-primary" type="button">Start Session</button>
+      </div>
+
+      <!-- Toggle advanced settings -->
+      <button id="toggleAdvanced" class="toggle-advanced-btn" type="button">
+        <span id="toggleAdvancedText">⚙️ Advanced Settings</span>
+        <span class="toggle-icon">▼</span>
+      </button>
+
+      <!-- Info text -->
+      <div class="info-text">
+        <p>Emergency calls still get through.</p>
+        <p id="totalTime">Total focus time: 0h 0m</p>
+      </div>
+    </div>
+
+    <!-- Advanced settings form -->
+    <div id="advancedSettings" class="advanced-settings hidden">
+      <div class="advanced-settings-header">
+        <h2 class="advanced-settings-title">Advanced Settings</h2>
+        <button id="closeAdvancedBtn" class="close-advanced-btn" type="button" aria-label="Close advanced settings">
+          ✕
+        </button>
+      </div>
       <form id="setupForm" class="stack" autocomplete="off" novalidate>
         <section class="panel">
-          <span class="label">Focus duration</span>
-          <div id="presetRow" class="row">
-            <button type="button" class="chip" data-min="25">25m</button>
-            <button type="button" class="chip" data-min="50">50m</button>
-            <button type="button" class="chip" data-min="90">90m</button>
-          </div>
-          <div class="grid-2">
-            <div>
-              <label class="label" for="customMinutes">Custom minutes</label>
-              <input id="customMinutes" type="number" min="1" max="600" placeholder="e.g. 45" inputmode="numeric" />
-            </div>
-            <div>
-              <label class="label" for="pin">Required passcode (min 4 digits)</label>
-              <input id="pin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Set a PIN" />
-            </div>
-          </div>
+          <label class="label" for="pin">Required passcode (min 4 digits)</label>
+          <input id="pin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="Set a PIN (e.g., 1234)" />
+          <p class="note">This PIN is required to pause or end your session early.</p>
         </section>
 
         <section class="panel">
           <label class="label" for="sessionDesc">Session description (optional)</label>
-          <textarea id="sessionDesc" rows="3" placeholder="e.g. ‘Deep work on resume builder, API wiring, and tests.’"></textarea>
-          <p class="note">This will appear on the Timer page and be saved in History.</p>
+          <textarea id="sessionDesc" rows="3" placeholder="e.g. 'Deep work on resume builder, API wiring, and tests.'"></textarea>
         </section>
 
         <section class="panel">
           <span class="label">Break plan</span>
           <select id="breakPlan">
-            <option value="pomodoro">Pomodoro: 25m focus → 5m stand/stretch</option>
-            <option value="fiftyten">50/10: 50m focus → 10m stand/stretch</option>
-            <option value="custom">Custom (choose your own)</option>
+            <option value="pomodoro">Pomodoro - 25m focus, 5m break</option>
+            <option value="fiftyten">50/10 - 50m focus, 10m break</option>
+            <option value="custom">Custom - Choose your own</option>
           </select>
 
           <div class="grid-2" style="margin-top:10px">
@@ -100,10 +136,7 @@
               <input type="checkbox" id="enableBreakQuotes" checked />
               <span>Show motivational quotes during breaks (when paused)</span>
             </label>
-            <span class="note">Quotes appear only while paused.</span>
           </div>
-
-          <p class="note">Breaks are nudges—no social scrolling.</p>
         </section>
 
         <section class="panel">
@@ -111,7 +144,7 @@
           <div class="grid-2" style="align-items:end">
             <label class="check">
               <input id="soundEnabled" type="checkbox" checked />
-              <span>Enable sound alerts (breaks, posture, head rest, time’s up)</span>
+              <span>Enable sound alerts</span>
             </label>
             <div>
               <label class="label" for="soundVolume">Volume</label>
@@ -121,24 +154,24 @@
           <div class="actions" style="margin-top:10px">
             <button type="button" class="btn-ghost btn" id="testSounds">Test sounds</button>
           </div>
-          <p class="note">Sounds use Web Audio. On iOS/Android they play after a tap.</p>
         </section>
 
         <section class="panel">
-          <span class="label">Emergency contacts (at least one)</span>
+          <span class="label">Emergency contacts (at least one required)</span>
+          <p class="note" style="margin-bottom:12px;">These numbers can be called during your session without entering a PIN.</p>
           <div class="grid-3">
             <input id="tel1" type="tel" placeholder="e.g. 911 or +1 416 555 1234" autocomplete="tel" />
             <input id="tel2" type="tel" placeholder="e.g. Mom +1 ..." autocomplete="tel" />
             <input id="tel3" type="tel" placeholder="e.g. Doctor +1 ..." autocomplete="tel" />
           </div>
-          <p class="note">Only emergency calls are allowed during lockdown—no PIN needed.</p>
         </section>
 
-        <div class="actions">
-          <button id="startBtn" class="btn" type="submit">⏱️ Start session</button>
-        </div>
-
         <p id="errors" class="errors hidden" role="alert"></p>
+        
+        <!-- Start session button in advanced settings -->
+        <div class="actions" style="margin-top:24px;">
+          <button id="startBtnAdvanced" class="btn-primary" type="button" style="width:100%;">Start Session</button>
+        </div>
       </form>
     </div>
   </main>
@@ -147,7 +180,7 @@
   <script src="alerts.js"></script>
   <script src="setup.js"></script>
 
-  <!-- Sound settings + replay lock animation on submit -->
+  <!-- Sound settings -->
   <script>
     (function(){
       const LS_ENABLED = 'lockedin.sound.enabled';
@@ -157,7 +190,8 @@
       const elVolume  = document.getElementById('soundVolume');
       const elTest    = document.getElementById('testSounds');
       const form      = document.getElementById('setupForm');
-      const setupLock = document.getElementById('setupLock');
+
+      if (!elEnabled || !elVolume || !elTest || !form) return;
 
       // Load saved settings
       const en = localStorage.getItem(LS_ENABLED);
@@ -175,7 +209,7 @@
         if (window.LockedInAlerts) LockedInAlerts.setVolume(e.target.value);
       });
 
-      // Test sounds (unlocks audio ctx after button tap)
+      // Test sounds
       elTest.addEventListener('click', () => {
         try {
           if (window.LockedInAlerts) {
@@ -190,14 +224,6 @@
           }
         } catch(e){}
       });
-
-      // Replay the lock “click shut” just before we navigate to timer
-      form.addEventListener('submit', () => {
-        if (!setupLock) return;
-        setupLock.classList.remove('intro');
-        void setupLock.offsetWidth;         // reflow to restart animation
-        setupLock.classList.add('intro');
-      }, { passive: true });
     })();
   </script>
 </body>

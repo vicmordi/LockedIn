@@ -13,26 +13,8 @@
       <div class="brand">
         <span class="dot"></span>
         <div>
-          <h1>LockedIn — Timer</h1>
-          <p class="muted">Tap the big clock to toggle Focus Mode.</p>
-        </div>
-
-        <div id="headerLock" class="lock-anim intro run" aria-hidden="true">
-          <svg class="lock-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lock visual">
-            <defs>
-              <radialGradient id="g" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="rgba(179,136,255,0.35)"></stop>
-                <stop offset="100%" stop-color="rgba(179,136,255,0)"></stop>
-              </radialGradient>
-            </defs>
-            <circle class="glow" cx="60" cy="60" r="42" fill="url(#g)"></circle>
-            <path class="shackle" d="M40 48 C40 30, 80 30, 80 48 L80 58" stroke-linecap="round"></path>
-            <rect class="body" x="34" y="56" rx="10" ry="10" width="52" height="44"></rect>
-            <g class="keyhole" transform="translate(60,78)">
-              <circle r="5"></circle>
-              <rect x="-2" y="5" width="4" height="10" rx="2"></rect>
-            </g>
-          </svg>
+          <h1>LockedIn</h1>
+          <p class="muted">Tap the timer to toggle Focus Mode.</p>
         </div>
       </div>
       <nav class="nav">
@@ -42,7 +24,8 @@
       </nav>
     </header>
 
-    <section id="timerPage" class="grid">
+    <section id="timerPage" class="timer-layout">
+      <!-- Main timer section -->
       <section class="panel panel-primary">
         <div class="clock-shell" id="clockShell" aria-hidden="true">
           <div
@@ -57,46 +40,39 @@
         </div>
 
         <div class="phase-meta">
-          <span class="phase-pill" id="phasePill">Focus</span>
-          <div class="sub" id="phaseLabel">Phase: Focus</div>
+          <div class="sub" id="phaseLabel">Stay focused. You've got this.</div>
         </div>
 
-        <div
-          class="progress"
-          role="progressbar"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="0"
-        >
-          <div id="bar" class="bar"></div>
+        <!-- Primary controls -->
+        <div class="controls-primary">
+          <button id="focusModeBtn" class="btn btn-primary-action">Focus Mode</button>
+          <button id="pauseResume" class="btn btn-secondary-action" disabled>Resume</button>
         </div>
 
-        <div class="controls">
-          <button id="pauseResume" class="btn btn-ghost" disabled>Resume</button>
-          <button id="endEarly" class="btn btn-ghost" disabled>End</button>
-          <button id="reset" class="btn btn-ghost">Reset</button>
+        <!-- Secondary controls -->
+        <div class="controls-secondary">
+          <button id="endEarly" class="btn btn-ghost" disabled>End Session</button>
           <button id="emergencyBtn" class="btn btn-ghost">Emergency</button>
-          <button id="focusModeBtn" class="btn">Focus Mode</button>
+          <button id="reset" class="btn btn-ghost">Reset</button>
         </div>
       </section>
 
-      <section class="panel panel-secondary">
+      <!-- Sidebar with session info and history -->
+      <aside class="panel panel-secondary">
         <div class="section-heading">
-          <label class="label">Session overview</label>
-          <p class="note">These details stay pinned while you focus.</p>
+          <label class="label">Session Info</label>
         </div>
         <div id="sessionInfo" class="session-info"></div>
 
-        <div class="section-heading" style="margin-top:18px;">
-          <label class="label">Recent sessions</label>
-          <p class="note">Track your consistency over time.</p>
+        <div class="section-heading" style="margin-top:24px;">
+          <label class="label">Recent Sessions</label>
         </div>
         <div id="history" class="history"></div>
 
-        <div class="actions">
-          <a id="backToSetup" class="btn" href="#">↩ Back to Setup</a>
+        <div class="actions" style="margin-top:20px;">
+          <a id="backToSetup" class="btn btn-ghost" href="#" style="width:100%;">Back to Setup</a>
         </div>
-      </section>
+      </aside>
     </section>
   </div>
 
@@ -128,9 +104,47 @@
     </div>
   </div>
 
+  <!-- Break Focus Confirmation Dialog -->
+  <div id="breakFocusSheet" class="sheet break-focus-sheet" aria-hidden="true">
+    <div class="sheet-inner break-focus-inner" onclick="event.stopPropagation()">
+      <div class="break-focus-icon">!</div>
+      <h2 class="h2">Break Focus?</h2>
+      <p class="note">Are you sure you want to end your session early?</p>
+      
+      <div class="break-focus-reason">
+        <label class="label" for="breakReason">Reason for ending early (optional)</label>
+        <input
+          id="breakReason"
+          type="text"
+          placeholder="e.g., urgent call, emerg"
+          class="pinbox"
+        />
+      </div>
+
+      <div class="sheet-actions">
+        <button id="confirmBreak" class="btn btn-ghost break-wait-btn">Wait 4s...</button>
+        <button id="cancelBreak" class="btn btn-ghost">Cancel</button>
+      </div>
+      
+      <p class="break-focus-hint">Think twice. You're doing great.</p>
+    </div>
+  </div>
+
   <!-- Minimal countdown overlay (Focus Mode) -->
   <div id="minimal" class="minimal" aria-hidden="true">
     <div id="minimalTimer" class="minimalTimer">00:00:00</div>
+    <!-- Menu button in fullscreen -->
+    <button id="fullscreenMenuBtn" class="fullscreen-menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Fullscreen Menu -->
+  <div id="fullscreenMenu" class="fullscreen-menu" aria-hidden="true">
+    <div class="fullscreen-menu-content">
+      <button id="exitFullscreenBtn" class="menu-item">Exit Focus Mode</button>
+      <button id="pauseFromFullscreen" class="menu-item">Pause</button>
+      <button id="endFromFullscreen" class="menu-item">End Session</button>
+      <button id="emergencyFromFullscreen" class="menu-item">Emergency</button>
+    </div>
   </div>
 
   <!-- Quotes toast container -->

@@ -47,6 +47,16 @@ const cancelSheet = document.getElementById('cancelSheet');
 const wakelockStatus = document.getElementById('wakelockStatus');
 const toasts = document.getElementById('toasts');
 const toggleSound = document.getElementById('toggleSound');
+const fullscreenMenuBtn = document.getElementById('fullscreenMenuBtn');
+const fullscreenMenu = document.getElementById('fullscreenMenu');
+const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+const pauseFromFullscreen = document.getElementById('pauseFromFullscreen');
+const endFromFullscreen = document.getElementById('endFromFullscreen');
+const emergencyFromFullscreen = document.getElementById('emergencyFromFullscreen');
+const breakFocusSheet = document.getElementById('breakFocusSheet');
+const confirmBreak = document.getElementById('confirmBreak');
+const cancelBreak = document.getElementById('cancelBreak');
+const breakReason = document.getElementById('breakReason');
 
 const headerLock = document.getElementById('headerLock');
 const headerKeyhole = headerLock ? headerLock.querySelector('.keyhole') : null;
@@ -179,7 +189,10 @@ function updateUI(){
   if (progressTrack) progressTrack.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
 
   const phaseText = phaseName();
-  if (phaseLabel) phaseLabel.textContent = `Phase: ${phaseText}`;
+  if (phaseLabel) {
+    // Show motivational text instead of "Phase: Focus"
+    phaseLabel.textContent = paused ? `Phase: ${phaseText}` : "Stay focused. You've got this.";
+  }
   if (phasePill) phasePill.textContent = phaseText;
   if (headerKeyhole){
     headerKeyhole.style.fill = phase === 'focus' ? '#b388ff' : '#7e57c2';
@@ -187,6 +200,9 @@ function updateUI(){
 
   if (pauseResumeBtn){
     pauseResumeBtn.textContent = paused ? 'Resume' : 'Pause';
+  }
+  if (pauseFromFullscreen){
+    pauseFromFullscreen.textContent = paused ? 'Resume' : 'Pause';
   }
 }
 
@@ -804,7 +820,11 @@ function openSheet(action){
   sheet.offsetHeight;
   sheet.setAttribute('aria-hidden', 'false');
   pinInput.value = '';
-  pinInput.focus();
+  // Only focus PIN input if PIN is required
+  const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+  if (hasPin) {
+    pinInput.focus();
+  }
 }
 function closeSheet(){
   sheet.setAttribute('aria-hidden', 'true');
@@ -820,7 +840,13 @@ pauseResumeBtn.addEventListener('click', () => {
   if (paused){
     resumeSession();
   }else{
-    openSheet('pause');
+    // Check if PIN is set - if not, pause directly without PIN
+    const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+    if (hasPin) {
+      openSheet('pause');
+    } else {
+      pauseSession();
+    }
   }
 });
 endEarlyBtn.addEventListener('click', () => {
@@ -828,9 +854,24 @@ endEarlyBtn.addEventListener('click', () => {
     alert('No active session to end.');
     return;
   }
-  openSheet('end');
+  // Check if PIN is set - if not, show break dialog without PIN requirement
+  const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+  if (hasPin) {
+    showBreakFocusDialog();
+  } else {
+    // No PIN set, show break dialog but skip PIN requirement
+    showBreakFocusDialogNoPin();
+  }
 });
-resetBtn.addEventListener('click', () => openSheet('reset'));
+resetBtn.addEventListener('click', () => {
+  // Check if PIN is set - if not, reset directly without PIN
+  const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+  if (hasPin) {
+    openSheet('reset');
+  } else {
+    resetSession();
+  }
+});
 
 // EMERGENCY: show contacts overlay (no PIN)
 emergencyBtn.addEventListener('click', () => {
@@ -855,10 +896,164 @@ if (timerEl){
   });
 }
 
+// Exit focus mode on tap in fullscreen (go back to timer page)
 if (minimal){
-  minimal.addEventListener('click', () => {
+  minimal.addEventListener('click', (e) => {
+    // Don't trigger if clicking the menu button
+    if (e.target === fullscreenMenuBtn || fullscreenMenuBtn?.contains(e.target)) return;
     if (paused) return;
+    // Exit focus mode to go back to timer page
     exitFocusMode();
+  });
+}
+
+// Fullscreen menu handlers
+function toggleFullscreenMenu(){
+  if (!fullscreenMenu) return;
+  const isHidden = fullscreenMenu.getAttribute('aria-hidden') === 'true';
+  fullscreenMenu.setAttribute('aria-hidden', String(!isHidden));
+}
+
+function closeFullscreenMenu(){
+  if (fullscreenMenu) fullscreenMenu.setAttribute('aria-hidden', 'true');
+}
+
+if (fullscreenMenuBtn){
+  fullscreenMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFullscreenMenu();
+  });
+}
+
+if (exitFullscreenBtn){
+  exitFullscreenBtn.addEventListener('click', () => {
+    closeFullscreenMenu();
+    exitFocusMode();
+  });
+}
+
+if (pauseFromFullscreen){
+  pauseFromFullscreen.addEventListener('click', () => {
+    closeFullscreenMenu();
+    if (paused){
+      resumeSession();
+    }else{
+      // Check if PIN is set - if not, pause directly without PIN
+      const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+      if (hasPin) {
+        openSheet('pause');
+      } else {
+        exitFocusMode();
+        pauseSession();
+      }
+    }
+  });
+}
+
+if (endFromFullscreen){
+  endFromFullscreen.addEventListener('click', () => {
+    closeFullscreenMenu();
+    // Exit fullscreen first, then show break focus dialog
+    exitFocusMode();
+    // Small delay to ensure fullscreen exits before showing dialog
+    setTimeout(() => {
+      // Check if PIN is set
+      const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+      if (hasPin) {
+        showBreakFocusDialog();
+      } else {
+        showBreakFocusDialogNoPin();
+      }
+    }, 100);
+  });
+}
+
+if (emergencyFromFullscreen){
+  emergencyFromFullscreen.addEventListener('click', () => {
+    closeFullscreenMenu();
+    showEmergencyOverlay();
+  });
+}
+
+// Break focus dialog (with PIN requirement)
+function showBreakFocusDialog(){
+  if (!breakFocusSheet) return;
+  breakFocusSheet.setAttribute('aria-hidden', 'false');
+  if (breakReason) breakReason.value = '';
+  if (breakReason) breakReason.focus();
+  
+  // Reset wait button
+  if (confirmBreak){
+    confirmBreak.textContent = 'Wait 4s...';
+    confirmBreak.disabled = true;
+    let countdown = 4;
+    const interval = setInterval(() => {
+      countdown--;
+      if (countdown > 0){
+        confirmBreak.textContent = `Wait ${countdown}s...`;
+      }else{
+        confirmBreak.textContent = 'End Session';
+        confirmBreak.disabled = false;
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+}
+
+// Break focus dialog (without PIN requirement)
+function showBreakFocusDialogNoPin(){
+  if (!breakFocusSheet) return;
+  breakFocusSheet.setAttribute('aria-hidden', 'false');
+  if (breakReason) breakReason.value = '';
+  if (breakReason) breakReason.focus();
+  
+  // Reset wait button - no PIN needed, so can end immediately after wait
+  if (confirmBreak){
+    confirmBreak.textContent = 'Wait 4s...';
+    confirmBreak.disabled = true;
+    let countdown = 4;
+    const interval = setInterval(() => {
+      countdown--;
+      if (countdown > 0){
+        confirmBreak.textContent = `Wait ${countdown}s...`;
+      }else{
+        confirmBreak.textContent = 'End Session';
+        confirmBreak.disabled = false;
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+}
+
+function closeBreakFocusDialog(){
+  if (breakFocusSheet) breakFocusSheet.setAttribute('aria-hidden', 'true');
+}
+
+if (confirmBreak){
+  confirmBreak.addEventListener('click', () => {
+    if (confirmBreak.disabled) return;
+    const reason = breakReason ? breakReason.value.trim() : '';
+    closeBreakFocusDialog();
+    
+    // Check if PIN is required
+    const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+    if (hasPin) {
+      // PIN is set - require PIN to confirm
+      pendingAction = 'end';
+      if (reason) {
+        sessionStorage.setItem('pendingEndReason', reason);
+      }
+      openSheet('end');
+    } else {
+      // No PIN set - end session directly
+      endAndNavigate('setup.html', reason || 'Ended early');
+    }
+  });
+}
+
+if (cancelBreak){
+  cancelBreak.addEventListener('click', () => {
+    closeBreakFocusDialog();
   });
 }
 
@@ -880,10 +1075,14 @@ backToSetup.addEventListener('click', (event) => {
 });
 
 submitPin.addEventListener('click', () => {
-  if ((pinInput.value || '') === (cfg.pin || '')){
+  // Check if PIN is set and matches
+  const hasPin = cfg && cfg.pin && typeof cfg.pin === 'string' && cfg.pin.trim().length >= 4;
+  if (!hasPin || (pinInput.value || '').trim() === (cfg.pin || '').trim()){
     switch (pendingAction){
       case 'end':
-        endAndNavigate('setup.html', 'Ended via PIN');
+        const reason = sessionStorage.getItem('pendingEndReason') || 'Ended via PIN';
+        sessionStorage.removeItem('pendingEndReason');
+        endAndNavigate('setup.html', reason);
         break;
       case 'pause':
         pauseSession();
@@ -910,6 +1109,7 @@ cancelSheet.addEventListener('click', closeSheet);
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement){
     showMinimal(false);
+    closeFullscreenMenu();
   }
 });
 
@@ -926,7 +1126,9 @@ document.addEventListener('fullscreenchange', () => {
   }
 
   durationMs = cfg.durationMs || 0;
-  if (!durationMs || !cfg.pin || !(cfg.emergency || []).length){
+  // Check if PIN exists (can be empty string for no PIN required)
+  const hasValidPin = cfg.pin !== undefined && cfg.pin !== null;
+  if (!durationMs || !hasValidPin || !(cfg.emergency || []).length){
     window.location.href = 'setup.html';
     return;
   }
