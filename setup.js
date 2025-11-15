@@ -324,9 +324,11 @@ function openAdvancedSettings(){
   
   if(advancedSettings){
     advancedSettings.classList.remove('hidden');
+    // Force reflow to ensure transition works
+    advancedSettings.offsetHeight;
     advancedSettings.classList.add('visible');
     if(toggleAdvancedBtn) toggleAdvancedBtn.classList.add('expanded');
-    if(toggleAdvancedText) toggleAdvancedText.textContent = '⚙️ Advanced Settings';
+    // Keep text as "Advanced Settings" - don't change it
   }
 }
 
